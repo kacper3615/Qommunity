@@ -5,7 +5,7 @@ class CommunitySearcher:
     def __init__(self, sampler: Sampler) -> None:
         self.sampler = sampler
 
-    def community_search(self, sampler: Sampler, verbosity: int = 0, community: list | None = None):
+    def community_search(self, verbosity: int = 0, community: list | None = None):
         if not community:
             community = [*range(self.sampler.G.number_of_nodes())]
 
@@ -59,9 +59,6 @@ class CommunitySearcher:
         elif max_depth < 1:
             print("Max depth value must be equal or greater than one!")
             return []
-
-        
-
         
 
     def _hierarchical_search_recursion(self, verbosity: bool, max_depth: int, level: int, community: list | None = None):
