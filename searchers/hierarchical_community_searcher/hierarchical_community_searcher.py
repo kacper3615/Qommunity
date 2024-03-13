@@ -74,7 +74,7 @@ class HierarchicalCommunitySearcher:
         if verbosity >= 2:
             print("Base community:", community, sep='\n')
             print("Community division:", c0, c1, sep='\n')
-            print("===========================================\n")
+            print("===========================================")
         
         if level == max_depth:
             if c0 and c1:

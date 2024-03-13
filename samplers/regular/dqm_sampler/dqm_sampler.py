@@ -15,7 +15,7 @@ class DQMSampler(RegularSampler):
         self.communities_number = communities
         
         network = Network(G, resolution=resolution, community=community)
-        problem = CommunityDetectionProblem(network, communities=communities, one_hot_encoding=False)
+        problem = CommunityDetectionProblem(network, communities=communities)
         self.dqm = DQM(problem=problem, time=time)
 
     def sample_qubo_to_dict(self) -> dict:
