@@ -1,11 +1,11 @@
-import networkx as nx
-from samplers.sampler import Sampler
+from samplers.hierarchical.hierarchical_sampler import HierarchicalSampler
 
-class CommunitySearcher:
-    def __init__(self, sampler: Sampler) -> None:
+
+class HierarchicalCommunitySearcher:
+    def __init__(self, sampler: HierarchicalSampler) -> None:
         self.sampler = sampler
 
-    def community_search(self, verbosity: int = 0, community: list | None = None):
+    def single_community_search(self, verbosity: int = 0, community: list | None = None) -> list:
         if not community:
             community = [*range(self.sampler.G.number_of_nodes())]
 
@@ -13,25 +13,16 @@ class CommunitySearcher:
             print("Starting community detection")
         if verbosity >= 2:
             print("===========================================")
-            print("Calculations for graph with", len(community))
+            print("Calculations for graph with", len(community), "nodes in community")
             print("===========================================")
 
         sample = self.sampler.sample_qubo_to_dict()
 
-        c0, c1 = [], []
-        for i in community:
-            value = sample.get(f"x{i}" , None)
-            if value == 0:
-                c0.append(i)
-            else:
-                c1.append(i)
+        c0, c1 = self._split_dict_to_lists(sample, community)
 
         if verbosity >= 2:
-            print("Base community:")
-            print(community)
-            print("Community division:")
-            print(c0)
-            print(c1)
+            print("Base community:", community, sep='\n')
+            print("Community division:", c0, c1, sep='\n')
             print("===========================================\n")
         if verbosity >= 1:
                 print("Stopping community detection")
@@ -78,21 +69,11 @@ class CommunitySearcher:
 
         sample = self.sampler.sample_qubo_to_dict()
 
-        c0, c1 = [], []
-        for i in community:
-            value = sample.get(f"x{i}" , None)
-            if value == 0:
-                c0.append(i)
-            else:
-                c1.append(i)
-    
+        c0, c1 = self._split_dict_to_lists(sample, community)
 
         if verbosity >= 2:
-            print("Base community:")
-            print(community)
-            print("Community division:")
-            print(c0)
-            print(c1)
+            print("Base community:", community, sep='\n')
+            print("Community division:", c0, c1, sep='\n')
             print("===========================================\n")
         
         if level == max_depth:
@@ -111,4 +92,14 @@ class CommunitySearcher:
                 return [c0]
             else:
                 return [c1]
+            
+    def _split_dict_to_lists(self, dictionary, community):
+        c0, c1 = [], []
+        for i in community:
+            value = dictionary.get(f"x{i}" , None)
+            if value == 0:
+                c0.append(i)
+            else:
+                c1.append(i)
+        return c0, c1
     

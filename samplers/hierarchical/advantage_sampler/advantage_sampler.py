@@ -1,10 +1,10 @@
 from QHyper.solvers.advantage import Advantage
 from QHyper.problems.community_detection import Network, CommunityDetectionProblem
 import networkx as nx
-from ..sampler import Sampler
+from ..hierarchical_sampler import HierarchicalSampler
 
 
-class AdvantageSampler(Sampler):
+class AdvantageSampler(HierarchicalSampler):
     def __init__(self, G: nx.Graph, time: float, resolution: float = 1, community: list = None) -> None:
         if not community:
             community = [*range(G.number_of_nodes())]
