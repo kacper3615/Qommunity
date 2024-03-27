@@ -4,10 +4,9 @@ from ...utils import communities_to_dict
 
 
 class LouvainSampler(RegularSampler):
-    def __init__(self, G: nx.Graph, resolution: float = 1, community: list = None):
+    def __init__(self, G: nx.Graph, resolution: float = 1):
         self.G = G
         self.resolution = resolution
-        self.community = community
         self.communities_number = None
 
     def sample_qubo_to_dict(self) -> dict: 
