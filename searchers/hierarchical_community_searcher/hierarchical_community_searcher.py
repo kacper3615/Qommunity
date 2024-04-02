@@ -42,7 +42,7 @@ class HierarchicalCommunitySearcher:
         verbosity: int = 0,
         max_depth: int | None = None,
         division_tree: bool = False,
-        division_modularities: bool = False,
+        return_modularities: bool = False,
     ) -> list:
         if verbosity >= 1:
             print("Starting community detection")
@@ -83,15 +83,22 @@ class HierarchicalCommunitySearcher:
                 if higher_list_elements == lower_list_elements:
                     division_tree.pop(len(division_tree) - 1)
 
-            if division_modularities:
-                modularities_tree = []
+            if division_tree and return_modularities:
+                division_modularities = []
                 for division in division_tree:
                     division_modularity = nx.community.modularity(
                         G=self.sampler.G,
                         communities=division,
                         resolution=self.sampler.resolution,
                     )
-                    modularities_tree.append(division_modularity)
+                    division_modularities.append(division_modularity)
+
+            elif return_modularities:
+                division_modularities = nx.community.modularity(
+                    G=self.sampler.G,
+                    communities=result,
+                    resolution=self.sampler.resolution,
+                )
 
             if verbosity >= 1:
                 print("Stopping community detection")
@@ -102,12 +109,12 @@ class HierarchicalCommunitySearcher:
                     for division in division_tree:
                         print(division)
 
-            if division_tree and division_modularities:
-                return result, division_tree, modularities_tree
+            if division_tree and return_modularities:
+                return result, division_tree, division_modularities
             if division_tree:
                 return result, division_tree
-            if division_modularities:
-                return result, modularities_tree
+            if return_modularities:
+                return result, division_modularities
             else:
                 return result
         elif max_depth < 1:
