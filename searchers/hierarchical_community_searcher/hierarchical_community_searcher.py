@@ -84,14 +84,14 @@ class HierarchicalCommunitySearcher:
                     division_tree.pop(len(division_tree) - 1)
 
             if division_modularities:
-                modularities = []
+                modularities_tree = []
                 for division in division_tree:
                     division_modularity = nx.community.modularity(
                         G=self.sampler.G,
                         communities=division,
                         resolution=self.sampler.resolution,
                     )
-                    modularities.append(division_modularity)
+                    modularities_tree.append(division_modularity)
 
             if verbosity >= 1:
                 print("Stopping community detection")
@@ -103,9 +103,11 @@ class HierarchicalCommunitySearcher:
                         print(division)
 
             if division_tree and division_modularities:
-                return result, division_tree, modularities
+                return result, division_tree, modularities_tree
             if division_tree:
                 return result, division_tree
+            if division_modularities:
+                return result, modularities_tree
             else:
                 return result
         elif max_depth < 1:
