@@ -17,6 +17,12 @@ Additionally, to increase convenience, you can add the QHyper library to the env
 4. Apply changes
 5. Reset your computer
 
+#### How to add library on Linux?
+1. Open .bashrc file using text editor. For example: **nano ~/.bashrc** (.bashrc file is a hidden file inside your user directory therefore, before opening the file, we type ~)
+2. Write in the last line of the file: **export PYTHONPATH="$PYTHONPATH:[QHyper location]**, for example: **export PYTHONPATH="$PYTHONPATH:/home/kacper/Documents/QHyper"** 
+3. Exit and save your .bashrc file
+4. Reset terminal and IDE (or even PC)
+
 Now you are able to import QHyper using "import QHyper" instead of using relative/absolute path
 
 ## How to use library?
