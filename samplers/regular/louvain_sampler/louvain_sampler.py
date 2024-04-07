@@ -9,14 +9,18 @@ class LouvainSampler(RegularSampler):
         self.resolution = resolution
         self.communities_number = None
 
-    def sample_qubo_to_dict(self) -> dict: 
-        communities = nx.community.louvain_communities(self.G, resolution=self.resolution)
+    def sample_qubo_to_dict(self) -> dict:
+        communities = nx.community.louvain_communities(
+            self.G, resolution=self.resolution
+        )
         self.communities_number = len(communities)
         result = communities_to_dict(communities)
         return result
-    
-    def sample_qubo_to_list(self) -> list: 
-        communities = nx.community.louvain_communities(self.G, resolution=self.resolution)
+
+    def sample_qubo_to_list(self) -> list:
+        communities = nx.community.louvain_communities(
+            self.G, resolution=self.resolution
+        )
         self.communities_number = len(communities)
         communities = list(map(list, communities))
         return communities
