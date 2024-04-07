@@ -9,10 +9,11 @@ def communities_to_list(sample, communities_number) -> list:
 
     return communities
 
+
 def communities_to_dict(communities) -> dict:
     result = {}
     for i in range(len(communities)):
         for j in communities[i]:
             result[f"x{j}"] = i
-            
+
     return result

@@ -1,6 +1,7 @@
 import networkx as nx
 from abc import ABC, abstractmethod
 
+
 class RegularSampler(ABC):
     @abstractmethod
     def __init__(self, G: nx.Graph, time: float, community: list = None):
