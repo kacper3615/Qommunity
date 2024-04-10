@@ -1,4 +1,4 @@
-from samplers.regular.regular_sampler import RegularSampler
+from Qommunity.samplers.regular.regular_sampler import RegularSampler
 
 class CommunitySearcher:
     def __init__(self, sampler: RegularSampler) -> None:

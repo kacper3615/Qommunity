@@ -1,4 +1,4 @@
-from samplers.hierarchical.hierarchical_sampler import HierarchicalSampler
+from Qommunity.samplers.hierarchical.hierarchical_sampler import HierarchicalSampler
 
 
 class HierarchicalCommunitySearcher:
