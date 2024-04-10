@@ -1,10 +1,16 @@
 from Qommunity.samplers.regular.regular_sampler import RegularSampler
 
+
 class CommunitySearcher:
     def __init__(self, sampler: RegularSampler) -> None:
         self.sampler = sampler
 
-    def community_search(self, verbosity: int = 0, return_list: bool = True, community: list | None = None):
+    def community_search(
+        self,
+        verbosity: int = 0,
+        return_list: bool = True,
+        community: list | None = None,
+    ):
         if not community:
             community = [*range(self.sampler.G.number_of_nodes())]
 
@@ -21,7 +27,7 @@ class CommunitySearcher:
             sample = self.sampler.sample_qubo_to_dict()
 
         if verbosity >= 2:
-            print("Base community:", community, sep='\n')
+            print("Base community:", community, sep="\n")
             print("Community division:")
             if return_list:
                 for subcommunity in sample:
@@ -32,10 +38,9 @@ class CommunitySearcher:
                     print(subcommunity)
             print("===========================================")
         if verbosity >= 1:
-                print("Stopping community detection")
+            print("Stopping community detection")
 
         return sample
-
 
     def _communities_to_list(self, sample) -> list:
         communities = []
