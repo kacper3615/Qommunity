@@ -112,9 +112,7 @@ def test_searchers_for_sample_graphs(sample_G0, sample_G1, sample_G2):
         dqm = DQMSampler(G, 5, communities=len(ground_communities))
         louvain = LouvainSampler(G, resolution=resolution)
 
-        # samplers = [louvain, dqm, bayan, leiden]
-        
-        samplers = [louvain, bayan, leiden]
+        samplers = [louvain, dqm, bayan, leiden]
         hierarchical_searcher = HierarchicalCommunitySearcher(advantage)
         regular_searchers = [CommunitySearcher(sampler) for sampler in samplers]
 
