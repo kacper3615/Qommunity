@@ -1,16 +1,15 @@
 import numpy as np
 import networkx as nx
-import matplotlib.pylab as plt
 
 import pytest
 import itertools
 
 from samplers.hierarchical.advantage_sampler import AdvantageSampler
+from samplers.hierarchical.hierarchical_sampler import HierarchicalSampler
 from samplers.regular.dqm_sampler import DQMSampler
 from samplers.regular.louvain_sampler import LouvainSampler
+from samplers.regular.regular_sampler import RegularSampler
 from searchers.community_searcher import CommunitySearcher
-from samplers.regular.bayan_sampler import BayanSampler
-from samplers.regular.leiden import LeidenSampler
 from searchers.hierarchical_community_searcher.hierarchical_community_searcher import (
     HierarchicalCommunitySearcher,
 )
@@ -76,28 +75,57 @@ def sample_G2(sample_G0):
     return G_bis_bis, c
 
 
-def _test_regular_searchers(regular_searchers: list, ground_communities: list):
-    for searcher in regular_searchers:
-        results = searcher.community_search()
-        results_sorted = sorted([sorted(community) for community in results])
-        ground_communities_sorted = sorted(
-            [sorted(community) for community in ground_communities]
-        )
-        assert results_sorted == ground_communities_sorted
+def get_all_subclasses(cls):
+    all_subclasses = []
+    for subclass in cls.__subclasses__():
+        all_subclasses.append(subclass)
+    return all_subclasses
 
 
-def _test_hierarchical_searcher(
-    hierarchical_searcher: HierarchicalCommunitySearcher, ground_communities: list
+@pytest.fixture(scope="session")
+def regular_samplers_subclasses():
+    return get_all_subclasses(RegularSampler)
+
+
+@pytest.fixture(scope="session")
+def hierarchical_samplers_subclasses():
+    return get_all_subclasses(HierarchicalSampler)
+
+
+def test_hierarchical_searcher_subclass_for_sample_graphs(
+    sample_G0, sample_G1, sample_G2, hierarchical_samplers_subclasses
 ):
-    results = hierarchical_searcher.hierarchical_community_search()
-    results_sorted = sorted([sorted(community) for community in results])
-    ground_communities_sorted = sorted(
-        [sorted(community) for community in ground_communities]
-    )
-    assert results_sorted == ground_communities_sorted
+    G0, ground_communities_G0 = sample_G0
+    G1, ground_communities_G1 = sample_G1
+    G2, ground_communities_G2 = sample_G2
+    graphs = [G0, G1, G2]
+    grounds = [ground_communities_G0, ground_communities_G1, ground_communities_G2]
+
+    for G, ground_communities in zip(graphs, grounds):
+        hierarchical_samplers = []
+        for subclass in hierarchical_samplers_subclasses:
+            if subclass is AdvantageSampler:
+                hierarchical_samplers.append(subclass(G, time=5))
+            else:
+                hierarchical_samplers.append(subclass(G))
+
+        hierarchical_searchers = [
+            HierarchicalCommunitySearcher(sampler) for sampler in hierarchical_samplers
+        ]
+        for searcher in hierarchical_searchers:
+            results = searcher.hierarchical_community_search()
+            # Detected communities may appear in random order
+            # so let's sort them to compare them
+            results_sorted = sorted([sorted(community) for community in results])
+            ground_communities_sorted = sorted(
+                [sorted(community) for community in ground_communities]
+            )
+            assert results_sorted == ground_communities_sorted
 
 
-def test_searchers_for_sample_graphs(sample_G0, sample_G1, sample_G2):
+def test_regular_searcher_subclass_for_sample_graphs(
+    sample_G0, sample_G1, sample_G2, regular_samplers_subclasses
+):
     G0, ground_communities_G0 = sample_G0
     G1, ground_communities_G1 = sample_G1
     G2, ground_communities_G2 = sample_G2
@@ -106,17 +134,23 @@ def test_searchers_for_sample_graphs(sample_G0, sample_G1, sample_G2):
     louvain_resolutions = [1, 1, 1]
 
     for G, ground_communities, resolution in zip(graphs, grounds, louvain_resolutions):
-        advantage = AdvantageSampler(G, 5)
-        bayan = BayanSampler(G)
-        leiden = LeidenSampler(G)
-        dqm = DQMSampler(G, 5, communities=len(ground_communities))
-        louvain = LouvainSampler(G, resolution=resolution)
+        samplers = []
+        for subclass in regular_samplers_subclasses:
+            if subclass is DQMSampler:
+                samplers.append(subclass(G, time=5, communities=len(ground_communities)))
+                pass
+            elif subclass is LouvainSampler:
+                samplers.append(subclass(G, resolution=resolution))
+            else:
+                samplers.append(subclass(G))
 
-        # samplers = [louvain, dqm, bayan, leiden]
-        
-        samplers = [louvain, bayan, leiden]
-        hierarchical_searcher = HierarchicalCommunitySearcher(advantage)
         regular_searchers = [CommunitySearcher(sampler) for sampler in samplers]
-
-        _test_regular_searchers(regular_searchers, ground_communities)
-        _test_hierarchical_searcher(hierarchical_searcher, ground_communities)
+        for searcher in regular_searchers:
+            results = searcher.community_search()
+            # Detected communities may appear in random order
+            # so let's sort them to compare them
+            results_sorted = sorted([sorted(community) for community in results])
+            ground_communities_sorted = sorted(
+                [sorted(community) for community in ground_communities]
+            )
+            assert results_sorted == ground_communities_sorted
