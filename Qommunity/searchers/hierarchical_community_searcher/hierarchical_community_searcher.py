@@ -152,7 +152,7 @@ class HierarchicalCommunitySearcher:
 
         if level != 1:
             self.sampler.__init__(
-                self.sampler.G, self.sampler.time, self.sampler.resolution, community
+                self.sampler.G, self.sampler.resolution, community
             )
 
         sample = self.sampler.sample_qubo_to_dict()
