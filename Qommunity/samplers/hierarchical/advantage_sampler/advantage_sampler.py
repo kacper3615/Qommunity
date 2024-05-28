@@ -1,4 +1,4 @@
-from QHyper.solvers.advantage import Advantage
+from QHyper.solvers.quantum_annealing.advantage import Advantage
 from QHyper.problems.community_detection import Network, CommunityDetectionProblem
 import networkx as nx
 from ..hierarchical_sampler import HierarchicalSampler
@@ -22,3 +22,7 @@ class AdvantageSampler(HierarchicalSampler):
 
     def sample_qubo_to_dict(self) -> dict:
         return self.advantage.solve().first.sample
+
+    def string_to_dict(s: str, prefix: str = "x") -> dict:
+        result = {f"{prefix}{i}": int(s[i]) for i in range(len(s))}
+        return result
