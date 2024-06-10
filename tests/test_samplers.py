@@ -4,7 +4,7 @@ import inspect
 from Qommunity.samplers.regular.regular_sampler import RegularSampler
 from Qommunity.samplers.regular.bayan_sampler import BayanSampler
 from Qommunity.samplers.regular.dqm_sampler import DQMSampler
-from Qommunity.samplers.regular.leiden import LeidenSampler
+from Qommunity.samplers.regular.leiden_sampler import LeidenSampler
 from Qommunity.samplers.regular.louvain_sampler import LouvainSampler
 from Qommunity.samplers.hierarchical.hierarchical_sampler import HierarchicalSampler
 from Qommunity.samplers.hierarchical.advantage_sampler import AdvantageSampler

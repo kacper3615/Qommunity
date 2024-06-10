@@ -1,4 +1,4 @@
-from QHyper.solvers.dqm import DQM
+from QHyper.solvers.quantum_annealing.dqm import DQM
 from QHyper.problems.community_detection import Network, CommunityDetectionProblem
 import networkx as nx
 from ..regular_sampler import RegularSampler
