@@ -6,7 +6,7 @@ from ..hierarchical_sampler import HierarchicalSampler
 
 class AdvantageSampler(HierarchicalSampler):
     def __init__(
-        self, G: nx.Graph, resolution: float = 1, community: list = None
+        self, G: nx.Graph, resolution: float = 1, community: list = None, num_reads: int = 100
     ) -> None:
         if not community:
             community = [*range(G.number_of_nodes())]
@@ -18,7 +18,8 @@ class AdvantageSampler(HierarchicalSampler):
         problem = CommunityDetectionProblem(
             network, communities=2, one_hot_encoding=False
         )
-        self.advantage = Advantage(problem=problem)
+        self.num_reads = num_reads # for test purposes, to delete later
+        self.advantage = Advantage(problem=problem, num_reads=num_reads)
 
     def sample_qubo_to_dict(self) -> dict:
         return self.advantage.solve().first.sample

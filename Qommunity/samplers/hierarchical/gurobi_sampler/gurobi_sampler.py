@@ -23,8 +23,8 @@ class GurobiSampler(HierarchicalSampler):
         model_id = G.name + str(GurobiSampler.instance_counter)
         
         # This is what I used in the notebook - commented here, because I updated my local version of QHyper
-        # self.gurobi = Gurobi(problem=problem, model_name=model_id, mip_gap=mip_gap, suppress_output=supress_output)
-        self.gurobi = Gurobi(problem=problem, model_name=model_id, mip_gap=mip_gap)
+        self.gurobi = Gurobi(problem=problem, model_name=model_id, mip_gap=mip_gap, suppress_output=supress_output)
+        # self.gurobi = Gurobi(problem=problem, model_name=model_id, mip_gap=mip_gap)
         GurobiSampler.instance_counter += 1
 
 
