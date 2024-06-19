@@ -10,7 +10,7 @@ class DQMSampler(RegularSampler):
         self,
         G: nx.Graph,
         time: float,
-        communities: int = 2,
+        cases: int = 2,
         resolution: float = 1,
         community: list = None,
     ) -> None:
@@ -20,18 +20,44 @@ class DQMSampler(RegularSampler):
         self.G = G
         self.time = time
         self.resolution = resolution
-        self.communities_number = communities
+        self.communities_number = cases
 
         network = Network(G, resolution=resolution, community=community)
-        problem = CommunityDetectionProblem(network, communities=communities)
-        self.dqm = DQM(problem=problem, time=time)
+        problem = CommunityDetectionProblem(network, communities=cases)
+        self.dqm = DQM(problem=problem, time=time, cases=cases)
 
     def sample_qubo_to_dict(self) -> dict:
-        sample = self.dqm.solve().first.sample
-        return sample
+        sample = self.dqm.solve()
+
+        variables = sorted(
+            [col for col in sample.probabilities.dtype.names if col.startswith("s")],
+            key=lambda s: int(s[1:]),
+        )
+        sample_communities = sample.probabilities[variables]
+
+        best_modularity, best_community = 0, []
+
+        for community in sample_communities:
+            communities = []
+            for i in range(self.communities_number):
+                communities.append([])
+
+            for i in range(self.G.number_of_nodes()):
+                communities[community[i]].append(i)
+
+            modularity = nx.community.modularity(
+                G=self.G,
+                communities=communities,
+                resolution=self.resolution,
+            )
+
+            if modularity > best_modularity:
+                best_modularity, best_community = modularity, community
+
+        return dict(zip(variables, best_community))
 
     def sample_qubo_to_list(self) -> list:
-        sample = self.dqm.solve().first.sample
+        sample = self.sample_qubo_to_dict()
         communities = communities_to_list(sample, self.communities_number)
         result = []
         for community in communities:

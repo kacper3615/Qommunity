@@ -44,11 +44,10 @@ class CommunitySearcher:
 
     def _communities_to_list(self, sample) -> list:
         communities = []
-        for k in range(self.sampler.communities_number):
-            subcommunity = []
-            for i in sample:
-                if sample[i] == k:
-                    subcommunity.append(i)
-            communities.append(subcommunity)
+        for _ in range(self.sampler.communities_number):
+            communities.append([])
+
+        for variable in sample:
+            communities[sample[variable]].append(variable)
 
         return communities
