@@ -25,7 +25,7 @@ class GurobiSampler(HierarchicalSampler):
             network, communities=2, one_hot_encoding=False
         )
 
-        model_id = G.name + str(GurobiSampler.instance_counter)
+        model_id = G.name
         self.gurobi = Gurobi(
             problem=problem,
             model_name=model_id,
