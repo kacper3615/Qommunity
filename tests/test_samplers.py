@@ -8,6 +8,7 @@ from Qommunity.samplers.regular.leiden_sampler import LeidenSampler
 from Qommunity.samplers.regular.louvain_sampler import LouvainSampler
 from Qommunity.samplers.hierarchical.hierarchical_sampler import HierarchicalSampler
 from Qommunity.samplers.hierarchical.advantage_sampler import AdvantageSampler
+from Qommunity.samplers.hierarchical.gurobi_sampler import GurobiSampler
 
 
 def get_all_subclasses(cls):
@@ -55,21 +56,10 @@ def test_regular_subclass_initialization(regular_subclasses, example_graph):
 def test_hierarchical_subclass_initialization(hierarchical_subclasses, example_graph):
     for subclass in hierarchical_subclasses:
         parameters = {"G": example_graph}
-        subclass_parameters = inspect.signature(subclass.__init__).parameters
-        if (
-            "time" in subclass_parameters
-            and subclass_parameters["time"].default == inspect.Parameter.empty
-        ):
-            parameters["time"] = 5
 
         instance = subclass(**parameters)
         assert isinstance(instance, HierarchicalSampler)
         assert instance.G == example_graph
-        if (
-            "time" in subclass_parameters
-            and subclass_parameters["time"].default == inspect.Parameter.empty
-        ):
-            assert instance.time == 5
 
 
 def test_regular_subclass_sample_qubo_to_dict(regular_subclasses, example_graph):

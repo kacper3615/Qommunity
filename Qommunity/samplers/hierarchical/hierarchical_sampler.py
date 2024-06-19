@@ -10,3 +10,7 @@ class HierarchicalSampler(ABC):
     @abstractmethod
     def sample_qubo_to_dict(self) -> dict:
         pass
+
+    @abstractmethod
+    def update_community(self, community: list) -> None:
+        pass

@@ -19,6 +19,9 @@ class GurobiSampler(HierarchicalSampler):
 
         self.G = G
         self.resolution = resolution
+        self.mip_gap = mip_gap
+        self.suppress_output = suppress_output
+        self.threads = threads
 
         network = Network(G, resolution=resolution, community=community)
         problem = CommunityDetectionProblem(
@@ -40,3 +43,13 @@ class GurobiSampler(HierarchicalSampler):
     def string_to_dict(s: str, prefix: str = "x") -> dict:
         result = {f"{prefix}{i}": int(s[i]) for i in range(len(s))}
         return result
+
+    def update_community(self, community: list) -> None:
+        self.__init__(
+            self.G,
+            self.resolution,
+            community,
+            self.mip_gap,
+            self.suppress_output,
+            self.threads,
+        )

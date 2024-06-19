@@ -20,6 +20,10 @@ class AdvantageSampler(HierarchicalSampler):
 
         self.G = G
         self.resolution = resolution
+        self.version = version
+        self.region = region
+        self.num_reads = num_reads
+        self.chain_strength = chain_strength
 
         network = Network(G, resolution=resolution, community=community)
         problem = CommunityDetectionProblem(
@@ -59,3 +63,14 @@ class AdvantageSampler(HierarchicalSampler):
                 best_modularity, best_community = modularity, community
 
         return dict(zip(variables, best_community))
+
+    def update_community(self, community: list) -> None:
+        self.__init__(
+            self.G,
+            self.resolution,
+            community,
+            self.version,
+            self.region,
+            self.num_reads,
+            self.chain_strength,
+        )
