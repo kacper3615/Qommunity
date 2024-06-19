@@ -6,7 +6,8 @@ from ..hierarchical_sampler import HierarchicalSampler
 
 class AdvantageSampler(HierarchicalSampler):
     def __init__(
-        self, G: nx.Graph,
+        self,
+        G: nx.Graph,
         resolution: float = 1,
         community: list = None,
         version: str = "Advantage_system5.4",
@@ -29,13 +30,16 @@ class AdvantageSampler(HierarchicalSampler):
     def sample_qubo_to_dict(self) -> dict:
         sample = self.advantage.solve()
 
-        variables = sorted([col for col in sample.probabilities.dtype.names if col.startswith('x')], key=lambda x: int(x[1:]))
+        variables = sorted(
+            [col for col in sample.probabilities.dtype.names if col.startswith("x")],
+            key=lambda x: int(x[1:]),
+        )
         sample_communities = sample.probabilities[variables]
 
         best_modularity, best_community = 0, []
 
         for community in sample_communities:
-            communities = [[], [], []] # c0, c1, rest of the nodes
+            communities = [[], [], []]  # c0, c1, rest of the nodes
             community_dictonary = dict(zip(variables, community))
             indices = [int(var[1:]) for var in variables]
 
@@ -46,10 +50,10 @@ class AdvantageSampler(HierarchicalSampler):
                     communities[2].append(i)
 
             modularity = nx.community.modularity(
-                        G=self.G,
-                        communities=communities,
-                        resolution=self.resolution,
-                    )
+                G=self.G,
+                communities=communities,
+                resolution=self.resolution,
+            )
 
             if modularity > best_modularity:
                 best_modularity, best_community = modularity, community

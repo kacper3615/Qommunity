@@ -150,11 +150,7 @@ class HierarchicalCommunitySearcher:
             )
             print("===========================================")
 
-
-        self.sampler.__init__(
-            self.sampler.G, self.sampler.resolution, community
-        )
-
+        self.sampler.__init__(self.sampler.G, self.sampler.resolution, community)
         sample = self.sampler.sample_qubo_to_dict()
 
         c0, c1 = self._split_dict_to_lists(sample, community)
