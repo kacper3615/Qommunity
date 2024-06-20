@@ -33,28 +33,9 @@ class DQMSampler(RegularSampler):
             [col for col in sample.probabilities.dtype.names if col.startswith("s")],
             key=lambda s: int(s[1:]),
         )
-        sample_communities = sample.probabilities[variables]
+        community = sample.probabilities[variables][0]
 
-        best_modularity, best_community = 0, []
-
-        for community in sample_communities:
-            communities = []
-            for i in range(self.communities_number):
-                communities.append([])
-
-            for i in range(self.G.number_of_nodes()):
-                communities[community[i]].append(i)
-
-            modularity = nx.community.modularity(
-                G=self.G,
-                communities=communities,
-                resolution=self.resolution,
-            )
-
-            if modularity > best_modularity:
-                best_modularity, best_community = modularity, community
-
-        return dict(zip(variables, best_community))
+        return dict(zip(variables, community))
 
     def sample_qubo_to_list(self) -> list:
         sample = self.sample_qubo_to_dict()
