@@ -38,31 +38,9 @@ class AdvantageSampler(HierarchicalSampler):
             [col for col in sample.probabilities.dtype.names if col.startswith("x")],
             key=lambda x: int(x[1:]),
         )
-        sample_communities = sample.probabilities[variables]
+        community = sample.probabilities[variables][0]
 
-        best_modularity, best_community = 0, []
-
-        for community in sample_communities:
-            communities = [[], [], []]  # c0, c1, rest of the nodes
-            community_dictonary = dict(zip(variables, community))
-            indices = [int(var[1:]) for var in variables]
-
-            for i in range(self.G.number_of_nodes()):
-                if i in indices:
-                    communities[community_dictonary[f"x{i}"]].append(i)
-                else:
-                    communities[2].append(i)
-
-            modularity = nx.community.modularity(
-                G=self.G,
-                communities=communities,
-                resolution=self.resolution,
-            )
-
-            if modularity > best_modularity:
-                best_modularity, best_community = modularity, community
-
-        return dict(zip(variables, best_community))
+        return dict(zip(variables, community))
 
     def update_community(self, community: list) -> None:
         self.__init__(
