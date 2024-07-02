@@ -45,14 +45,14 @@ make_dir(f"{dir}/{solver}")
 
 N_RUNS = 1
 
-G_idx = 1
+G_idx = MAX_NODES//MIN_NODES - 1
 
 mods = np.zeros((num_nodes[:G_idx].shape[0], N_RUNS))
 comms = np.empty((num_nodes[:G_idx].shape[0], N_RUNS), dtype=object)
 
 mods_graph_N = np.zeros((N_RUNS))
 comms_graph_N = np.empty((N_RUNS), dtype=object)
-for i, G in tqdm(enumerate(Graphs[:G_idx])):
+for i, G in tqdm(enumerate(Graphs[G_idx:])):
     current_net_size = int(G.number_of_nodes())    
     for r in range(N_RUNS):
         # new instance of the sampler each time
