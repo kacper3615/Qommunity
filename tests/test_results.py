@@ -105,7 +105,7 @@ def test_hierarchical_searcher_subclass_for_sample_graphs(
         hierarchical_samplers = []
         for subclass in hierarchical_samplers_subclasses:
             if subclass is AdvantageSampler:
-                hierarchical_samplers.append(subclass(G, time=5))
+                hierarchical_samplers.append(subclass(G))
             else:
                 hierarchical_samplers.append(subclass(G))
 
@@ -137,7 +137,7 @@ def test_regular_searcher_subclass_for_sample_graphs(
         samplers = []
         for subclass in regular_samplers_subclasses:
             if subclass is DQMSampler:
-                samplers.append(subclass(G, time=5, communities=len(ground_communities)))
+                samplers.append(subclass(G, time=5, cases=len(ground_communities)))
                 pass
             elif subclass is LouvainSampler:
                 samplers.append(subclass(G, resolution=resolution))
