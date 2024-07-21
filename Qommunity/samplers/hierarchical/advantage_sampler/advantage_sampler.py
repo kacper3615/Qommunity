@@ -14,6 +14,7 @@ class AdvantageSampler(HierarchicalSampler):
         region: str = "eu-central-1",
         num_reads: int = 1,
         chain_strength: float | None = None,
+        use_clique_embedding: bool = False,
     ) -> None:
         if not community:
             community = [*range(G.number_of_nodes())]
@@ -24,12 +25,20 @@ class AdvantageSampler(HierarchicalSampler):
         self.region = region
         self.num_reads = num_reads
         self.chain_strength = chain_strength
+        self.use_clique_embedding = use_clique_embedding
 
         network = Network(G, resolution=resolution, community=community)
         problem = CommunityDetectionProblem(
             network, communities=2, one_hot_encoding=False
         )
-        self.advantage = Advantage(problem, version, region, num_reads, chain_strength)
+        self.advantage = Advantage(
+            problem=problem,
+            version=version,
+            region=region,
+            num_reads=num_reads,
+            chain_strength=chain_strength,
+            use_clique_embedding=use_clique_embedding,
+        )
 
     def sample_qubo_to_dict(self) -> dict:
         sample = self.advantage.solve()
@@ -51,4 +60,5 @@ class AdvantageSampler(HierarchicalSampler):
             self.region,
             self.num_reads,
             self.chain_strength,
+            self.use_clique_embedding,
         )
