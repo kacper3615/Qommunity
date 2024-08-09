@@ -54,6 +54,8 @@ class IterativeSearcherHierarchical:
             if save_results:
                 np.save(f"{saving_path}", modularities)
                 np.save(f"{saving_path}_comms", communities)
+                if elapse_times:
+                    np.save(f"{saving_path}_times", times)
 
             if iterative_verbosity >= 1:
                 print(f"Iteration {iter} completed")
@@ -116,6 +118,7 @@ class IterativeSearcherHierarchical:
             if save_results:
                 np.save(f"{saving_path}", modularities)
                 np.save(f"{saving_path}_comms", communities)
+                np.save(f"{saving_path}_times", times)
 
             if iterative_verbosity >= 1:
                 print(f"Iteration {iter} completed")
