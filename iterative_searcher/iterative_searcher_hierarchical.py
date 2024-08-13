@@ -5,6 +5,24 @@ import networkx as nx
 from time import time
 from tqdm import tqdm
 import numpy as np
+import warnings
+
+
+class ResolutionValueWarning(Warning):
+    message = "The resolution passed to the objective function differs from" \
+            " the resolution used to calculate the modularity score."
+
+    def __init__(self):
+        super().__init__(ResolutionValueWarning.message)
+
+
+def warn(message, category, filename, lineno, file=None, line=None):
+    tqdm.write(f"Warning: {str(message)}")
+
+
+warnings.showwarning = warn
+
+warnings.simplefilter("always", ResolutionValueWarning)
 
 
 class IterativeSearcherHierarchical:
@@ -14,6 +32,7 @@ class IterativeSearcherHierarchical:
     def run(
         self,
         num_runs: int,
+        score_resolution: float = 1,
         save_results: bool = True,
         saving_path: str | None = None,
         elapse_times: bool = True,
@@ -31,6 +50,9 @@ class IterativeSearcherHierarchical:
                 + f"{self.searcher.sampler.G.number_of_nodes()}"
             )
 
+        if hasattr(self.searcher.sampler, "resolution") and score_resolution != self.searcher.sampler.resolution:
+            warnings.warn(ResolutionValueWarning())
+
         modularities = np.zeros((num_runs))
         communities = np.empty((num_runs), dtype=object)
         times = np.zeros((num_runs))
@@ -42,7 +64,7 @@ class IterativeSearcherHierarchical:
 
             try:
                 modularity_score = nx.community.modularity(
-                    self.searcher.sampler.G, result
+                    self.searcher.sampler.G, result, resolution=score_resolution
                 )
             except Exception as e:
                 print(f"iteration: {iter} exception: {e}")
@@ -67,6 +89,7 @@ class IterativeSearcherHierarchical:
     def run_with_full_sampleset_info(
         self,
         num_runs: int,
+        score_resolution: float = 1,
         save_results: bool = True,
         saving_path: str | None = None,
         iterative_verbosity: int = 0,
@@ -82,6 +105,9 @@ class IterativeSearcherHierarchical:
                 + "-network_size_"
                 + f"{self.searcher.sampler.G.number_of_nodes()}"
             )
+
+        if hasattr(self.searcher.sampler, "resolution") and score_resolution != self.searcher.sampler.resolution:
+            warnings.warn(ResolutionValueWarning())
 
         modularities = np.zeros((num_runs))
         communities = np.empty((num_runs), dtype=object)
@@ -106,7 +132,7 @@ class IterativeSearcherHierarchical:
 
             try:
                 modularity_score = nx.community.modularity(
-                    self.searcher.sampler.G, communities_result
+                    self.searcher.sampler.G, communities_result, resolution=score_resolution
                 )
             except Exception as e:
                 print(f"iteration: {iter} exception: {e}")
