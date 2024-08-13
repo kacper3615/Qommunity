@@ -12,7 +12,7 @@ class GurobiSampler(HierarchicalSampler):
         community: list = None,
         mip_gap: float | None = None,
         suppress_output: bool = True,
-        threads: int = 1,
+        threads: int = 0,
     ) -> None:
         if not community:
             community = [*range(G.number_of_nodes())]
