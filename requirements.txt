@@ -10,3 +10,4 @@ networkx==3.3
 pytest==8.2.2
 python_igraph==0.11.6
 QHyper==0.2.2
+powerlaw
