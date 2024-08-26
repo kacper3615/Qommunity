@@ -1,7 +1,5 @@
-from Qommunity.searchers.community_searcher import CommunitySearcher
-from Qommunity.searchers.hierarchical_community_searcher import (
-    HierarchicalCommunitySearcher,
-)
+from Qommunity.samplers.hierarchical.hierarchical_sampler import HierarchicalSampler
+from Qommunity.samplers.regular.regular_sampler import RegularSampler
 from iterative_searcher.iterative_searcher_hierarchical import (
     IterativeSearcherHierarchical,
 )
@@ -10,9 +8,9 @@ from iterative_searcher.iterative_searcher_regular import IterativeSearcherRegul
 
 class IterativeSearcher:
     def __new__(
-        cls, searcher: HierarchicalCommunitySearcher | CommunitySearcher
+        cls, sampler: HierarchicalSampler | RegularSampler
     ) -> "IterativeSearcherHierarchical | IterativeSearcherRegular":
-        if isinstance(searcher, HierarchicalCommunitySearcher):
-            return IterativeSearcherHierarchical(searcher)
-        elif isinstance(searcher, CommunitySearcher):
-            return IterativeSearcherRegular(searcher)
+        if isinstance(sampler, HierarchicalSampler):
+            return IterativeSearcherHierarchical(sampler)
+        elif isinstance(sampler, RegularSampler):
+            return IterativeSearcherRegular(sampler)

@@ -1,3 +1,4 @@
+from Qommunity.samplers.hierarchical.hierarchical_sampler import HierarchicalSampler
 from Qommunity.searchers.hierarchical_community_searcher import (
     HierarchicalCommunitySearcher,
 )
@@ -8,55 +9,61 @@ import numpy as np
 import warnings
 
 
-class ResolutionValueWarning(Warning):
-    message = (
-        "The resolution passed to the objective function differs from"
-        " the resolution used to calculate the modularity score."
-    )
-
-    def __init__(self):
-        super().__init__(ResolutionValueWarning.message)
+class MethodArgsWarning(Warning):
+    def __init__(self, msg):
+        super().__init__(msg)
 
 
+# Warning format compatible with tqdm
 def warn(message, category, filename, lineno, file=None, line=None):
-    tqdm.write(f"Warning: {str(message)}")
+    tqdm.write("Warning: {str(message)}")
 
 
 warnings.showwarning = warn
-
-warnings.simplefilter("always", ResolutionValueWarning)
+warnings.simplefilter("always", MethodArgsWarning)
 
 
 class IterativeSearcherHierarchical:
-    def __init__(self, searcher: HierarchicalCommunitySearcher) -> None:
-        self.searcher = searcher
+    def __init__(self, sampler: HierarchicalSampler) -> None:
+        self.sampler = sampler
+        self.searcher = HierarchicalCommunitySearcher(self.sampler)
+
+    def default_saving_path(self) -> str:
+        return (
+                f"{self.sampler.__class__.__name__}"
+                + "-network_size_"
+                + f"{self.sampler.G.number_of_nodes()}"
+            )
+
+    def verify_kwargs(self, kwargs) -> dict:
+        kwargs_unhandled = ["division_tree", "return_modularities"]
+        kwargs_warning = []
+        for kwarg in kwargs_unhandled:
+            if kwarg in kwargs:
+                kwargs.pop(kwarg, None)
+                kwargs_warning.append(kwarg)
+        if kwargs_warning:
+            msg = ", ".join(kwargs_warning)
+            warnings.warn(f"in order to get {msg} run " + " IterativeSearcher.run_with_sampleset_info()")
+
+        return kwargs
 
     def run(
         self,
         num_runs: int,
-        score_resolution: float = 1,
         save_results: bool = True,
         saving_path: str | None = None,
         elapse_times: bool = True,
         iterative_verbosity: int = 0,
         **kwargs,
     ):
+        kwargs = self.verify_kwargs(kwargs)
 
         if iterative_verbosity >= 1:
             print("Starting community detection iterations")
 
         if save_results and saving_path is None:
-            saving_path = (
-                f"{self.searcher.sampler.__class__.__name__}"
-                + "-network_size_"
-                + f"{self.searcher.sampler.G.number_of_nodes()}"
-            )
-
-        if (
-            hasattr(self.searcher.sampler, "resolution")
-            and score_resolution != self.searcher.sampler.resolution
-        ):
-            warnings.warn(ResolutionValueWarning())
+            saving_path = self.default_saving_path()
 
         modularities = np.zeros((num_runs))
         communities = np.empty((num_runs), dtype=object)
@@ -69,7 +76,7 @@ class IterativeSearcherHierarchical:
 
             try:
                 modularity_score = nx.community.modularity(
-                    self.searcher.sampler.G, result, resolution=score_resolution
+                    self.searcher.sampler.G, result, resolution=self.sampler.resolution
                 )
             except Exception as e:
                 print(f"iteration: {iter} exception: {e}")
@@ -91,7 +98,7 @@ class IterativeSearcherHierarchical:
             return communities, modularities, times
         return communities, modularities
 
-    def run_with_full_sampleset_info(
+    def run_with_sampleset_info(
         self,
         num_runs: int,
         score_resolution: float = 1,
@@ -105,17 +112,7 @@ class IterativeSearcherHierarchical:
             print("Starting community detection iterations")
 
         if save_results and saving_path is None:
-            saving_path = (
-                f"{self.searcher.sampler.__class__.__name__}"
-                + "-network_size_"
-                + f"{self.searcher.sampler.G.number_of_nodes()}"
-            )
-
-        if (
-            hasattr(self.searcher.sampler, "resolution")
-            and score_resolution != self.searcher.sampler.resolution
-        ):
-            warnings.warn(ResolutionValueWarning())
+            saving_path = self.default_saving_path()
 
         modularities = np.zeros((num_runs))
         communities = np.empty((num_runs), dtype=object)

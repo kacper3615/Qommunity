@@ -6,8 +6,9 @@ from ...utils import communities_to_dict
 
 
 class LeidenSampler(RegularSampler):
-    def __init__(self, G: nx.Graph):
+    def __init__(self, G: nx.Graph, resolution: float = 1):
         self.G = G
+        self.resolution = resolution
 
     def sample_qubo_to_dict(self) -> dict:
         communities = list(
