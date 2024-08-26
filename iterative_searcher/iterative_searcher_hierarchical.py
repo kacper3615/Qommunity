@@ -9,8 +9,10 @@ import warnings
 
 
 class ResolutionValueWarning(Warning):
-    message = "The resolution passed to the objective function differs from" \
-            " the resolution used to calculate the modularity score."
+    message = (
+        "The resolution passed to the objective function differs from"
+        " the resolution used to calculate the modularity score."
+    )
 
     def __init__(self):
         super().__init__(ResolutionValueWarning.message)
@@ -50,7 +52,10 @@ class IterativeSearcherHierarchical:
                 + f"{self.searcher.sampler.G.number_of_nodes()}"
             )
 
-        if hasattr(self.searcher.sampler, "resolution") and score_resolution != self.searcher.sampler.resolution:
+        if (
+            hasattr(self.searcher.sampler, "resolution")
+            and score_resolution != self.searcher.sampler.resolution
+        ):
             warnings.warn(ResolutionValueWarning())
 
         modularities = np.zeros((num_runs))
@@ -106,7 +111,10 @@ class IterativeSearcherHierarchical:
                 + f"{self.searcher.sampler.G.number_of_nodes()}"
             )
 
-        if hasattr(self.searcher.sampler, "resolution") and score_resolution != self.searcher.sampler.resolution:
+        if (
+            hasattr(self.searcher.sampler, "resolution")
+            and score_resolution != self.searcher.sampler.resolution
+        ):
             warnings.warn(ResolutionValueWarning())
 
         modularities = np.zeros((num_runs))
@@ -132,7 +140,9 @@ class IterativeSearcherHierarchical:
 
             try:
                 modularity_score = nx.community.modularity(
-                    self.searcher.sampler.G, communities_result, resolution=score_resolution
+                    self.searcher.sampler.G,
+                    communities_result,
+                    resolution=score_resolution,
                 )
             except Exception as e:
                 print(f"iteration: {iter} exception: {e}")
