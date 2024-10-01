@@ -10,7 +10,7 @@ class DQMSampler(RegularSampler):
         self,
         G: nx.Graph,
         time: float,
-        cases: int = 2,
+        cases: int,
         resolution: float = 1,
         community: list = None,
     ) -> None:

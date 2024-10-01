@@ -6,14 +6,18 @@ from ...utils import communities_to_dict
 
 
 class LeidenSampler(RegularSampler):
-    def __init__(self, G: nx.Graph):
+    def __init__(self, G: nx.Graph, weights: bool = True):
         self.G = G
+        self.weights = (
+            list(nx.get_edge_attributes(G, "weight").values()) if weights else None
+        )
 
     def sample_qubo_to_dict(self) -> dict:
         communities = list(
             la.find_partition(
                 ig.Graph.from_networkx(self.G),
                 partition_type=la.ModularityVertexPartition,
+                weights=self.weights,
             )
         )
         self.communities_number = len(communities)
@@ -25,6 +29,7 @@ class LeidenSampler(RegularSampler):
             la.find_partition(
                 ig.Graph.from_networkx(self.G),
                 partition_type=la.ModularityVertexPartition,
+                weights=self.weights,
             )
         )
         return sample
