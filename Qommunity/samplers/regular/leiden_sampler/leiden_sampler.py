@@ -17,8 +17,9 @@ class LeidenSampler(RegularSampler):
         communities = list(
             la.find_partition(
                 ig.Graph.from_networkx(self.G),
-                partition_type=la.ModularityVertexPartition,
+                partition_type=la.RBConfigurationVertexPartition,
                 weights=self.weights,
+                resolution_parameter=self.resolution,
             )
         )
         self.communities_number = len(communities)
@@ -29,8 +30,9 @@ class LeidenSampler(RegularSampler):
         sample = list(
             la.find_partition(
                 ig.Graph.from_networkx(self.G),
-                partition_type=la.ModularityVertexPartition,
+                partition_type=la.RBConfigurationVertexPartition,
                 weights=self.weights,
+                resolution_parameter=self.resolution,
             )
         )
         return sample
