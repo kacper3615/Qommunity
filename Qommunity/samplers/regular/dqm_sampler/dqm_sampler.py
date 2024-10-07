@@ -12,7 +12,8 @@ class DQMSampler(RegularSampler):
         time: float,
         cases: int,
         resolution: float = 1,
-        community: list = None,
+        use_weights: bool = True,
+        community: list | None = None,
     ) -> None:
         if not community:
             community = [*range(G.number_of_nodes())]
@@ -22,7 +23,8 @@ class DQMSampler(RegularSampler):
         self.resolution = resolution
         self.communities_number = cases
 
-        network = Network(G, resolution=resolution, community=community)
+        weights = "weight" if use_weights else None
+        network = Network(G, resolution=resolution, weight=weights, community=community)
         problem = CommunityDetectionProblem(network, communities=cases)
         self.dqm = DQM(problem=problem, time=time, cases=cases)
 

@@ -6,10 +6,13 @@ from ...utils import communities_to_dict
 
 
 class LeidenSampler(RegularSampler):
-    def __init__(self, G: nx.Graph, weights: bool = True, resolution: float = 1):
+    def __init__(self, G: nx.Graph, use_weights: bool = True, resolution: float = 1):
         self.G = G
+        G_weights = list(nx.get_edge_attributes(G, "weight").values())
         self.weights = (
-            list(nx.get_edge_attributes(G, "weight").values()) if weights else None
+            list(nx.get_edge_attributes(G, "weight").values())
+            if use_weights and G_weights
+            else None
         )
         self.resolution = resolution
 

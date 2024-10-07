@@ -9,7 +9,8 @@ class GurobiSampler(HierarchicalSampler):
         self,
         G: nx.Graph,
         resolution: float = 1,
-        community: list = None,
+        community: list | None = None,
+        use_weights: bool = True,
         mip_gap: float | None = None,
         suppress_output: bool = True,
         threads: int = 0,
@@ -22,8 +23,10 @@ class GurobiSampler(HierarchicalSampler):
         self.mip_gap = mip_gap
         self.suppress_output = suppress_output
         self.threads = threads
+        self._use_weights = use_weights
 
-        network = Network(G, resolution=resolution, community=community)
+        weight = "weight" if use_weights else None
+        network = Network(G, resolution=resolution, weight=weight, community=community)
         problem = CommunityDetectionProblem(
             network, communities=2, one_hot_encoding=False
         )
@@ -49,6 +52,7 @@ class GurobiSampler(HierarchicalSampler):
             self.G,
             self.resolution,
             community,
+            self._use_weights,
             self.mip_gap,
             self.suppress_output,
             self.threads,

@@ -11,7 +11,7 @@ class IterativeSearcherRegular:
         self.sampler = sampler
         self.searcher = CommunitySearcher(self.sampler)
 
-    def default_saving_path(self) -> str:
+    def _default_saving_path(self) -> str:
         return (
             f"{self.sampler.__class__.__name__}"
             + "-network_size_"
@@ -32,7 +32,7 @@ class IterativeSearcherRegular:
             print("Starting community detection iterations")
 
         if save_results and saving_path is None:
-            saving_path = self.default_saving_path()
+            saving_path = self._default_saving_path()
         modularities = np.zeros((num_runs))
         communities = np.empty((num_runs), dtype=object)
         times = np.zeros((num_runs))

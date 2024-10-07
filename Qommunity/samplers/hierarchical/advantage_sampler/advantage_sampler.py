@@ -9,7 +9,8 @@ class AdvantageSampler(HierarchicalSampler):
         self,
         G: nx.Graph,
         resolution: float = 1,
-        community: list = None,
+        community: list | None = None,
+        use_weights: bool = True,
         version: str = "Advantage_system5.4",
         region: str = "eu-central-1",
         num_reads: int = 1,
@@ -26,8 +27,10 @@ class AdvantageSampler(HierarchicalSampler):
         self.num_reads = num_reads
         self.chain_strength = chain_strength
         self.use_clique_embedding = use_clique_embedding
+        self._use_weights = use_weights
 
-        network = Network(G, resolution=resolution, community=community)
+        weight = "weight" if use_weights else None
+        network = Network(G, resolution=resolution, weight=weight, community=community)
         problem = CommunityDetectionProblem(
             network, communities=2, one_hot_encoding=False
         )
@@ -56,6 +59,7 @@ class AdvantageSampler(HierarchicalSampler):
             self.G,
             self.resolution,
             community,
+            self._use_weights,
             self.version,
             self.region,
             self.num_reads,
