@@ -72,16 +72,19 @@ class HierarchicalCommunitySearcher:
                             if unique_to_sublist:
                                 division_tree[i].append(sublist)
 
-                # Remove the last division if it repeats itself
-                higher_list_elements = self._flatten_list_to_set(
-                    division_tree[len(division_tree) - 2]
-                )
-                lower_list_elements = self._flatten_list_to_set(
-                    division_tree[len(division_tree) - 1]
-                )
+                # Check if the two last divisions are the same
+                # - unify the order of nodes within the community lists
+                # and the order of communities within the list of communities
+                def list_of_lists_sorted(list_of_lists: list[list]) -> list[list]:
+                    return sorted([sorted(sublist) for sublist in list_of_lists])
 
+                # Compare if they're the same
+                higher_list_elements = list_of_lists_sorted(division_tree[-2])
+                lower_list_elements = list_of_lists_sorted(division_tree[-1])
+
+                # Remove the last division if it repeats itself
                 if higher_list_elements == lower_list_elements:
-                    division_tree.pop(len(division_tree) - 1)
+                    division_tree.pop(-1)
 
             if division_tree and return_modularities:
                 division_modularities = []
