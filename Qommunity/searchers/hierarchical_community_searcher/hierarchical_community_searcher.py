@@ -84,7 +84,7 @@ class HierarchicalCommunitySearcher:
 
                 # Remove the last division if it repeats itself
                 if higher_list_elements == lower_list_elements:
-                    division_tree.pop(len(division_tree) - 1)
+                    division_tree.pop(-1)
 
             if division_tree and return_modularities:
                 division_modularities = []
