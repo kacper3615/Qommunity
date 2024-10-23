@@ -225,7 +225,7 @@ class Dendrogram:
             node_positions=node_positions,
             cluster_colors=cluster_colors,
         )
-        self._mark_modularity_increments_style2(ax, Y_levels, nodes)
+        self._mark_modularity_increments_style2(ax, Y_levels, nodes, yaxis_abs_log)
 
         xlabel_rot_angle = xlabel_rotation if xlabel_rotation else 0
 
@@ -272,7 +272,8 @@ class Dendrogram:
                 label.set_visible(False)
 
         # Set yticks
-        ax.set_yticks([0] + Y_levels)
+        ax.set_yticks(np.sort(np.array([0]+Y_levels)))
+        ax.set_yticklabels([round(m,4) for m in self.division_modularities[::-1]])
         # Draw the base of modularity = 0
         ax.axhline(
             y=0,
@@ -435,7 +436,8 @@ class Dendrogram:
             ylabel_rot=ylabel_rot_angle,
         )
 
-        ax.set_xticks([0] + Y_levels)
+        ax.set_xticks(np.sort(np.array([0]+Y_levels)))
+        ax.set_xticklabels([round(m,4) for m in self.division_modularities[::-1]])
         ax.axvline(x=0, color="gray", linestyle="--", linewidth=0.8)
 
         # Hide plot box borders (spines)
@@ -810,13 +812,16 @@ class Dendrogram:
 
             ymin = ymax
 
-    def _mark_modularity_increments_style2(self, ax, Y_levels, nodes):
+    def _mark_modularity_increments_style2(self, ax, Y_levels, nodes, yaxis_abs_log):
         x_annotation_line = max(nodes) + 2
 
         Y_levels_reversed = list(reversed(Y_levels))
         ymin = self.division_modularities[0]  # 0
+        inc_ms = list(
+            np.array(self.division_modularities[1:])-np.array(self.division_modularities[:-1])
+        )[::-1]
 
-        for y in Y_levels_reversed:
+        for i, y in enumerate(Y_levels_reversed):
             ymax = y
             y_increment_value = ymax - ymin
             dash_margin = 0
@@ -851,9 +856,9 @@ class Dendrogram:
                 linewidth=1.5,
                 alpha=0.6,
             )
-
+            
             ax.annotate(
-                f"{y_increment_value:.4f}",
+                f"{inc_ms[i]:.4f}",
                 xy=(x_annotation_line + 0.35, (ymin + ymax) / 2),
                 xytext=(40, 0),
                 textcoords="offset points",
@@ -1016,18 +1021,14 @@ class Dendrogram:
 
     def _set_yaxis_label(self, yaxis_abs_log, kwargs, ax):
         ylabel_default = (
-            "Modularity increase"
-            if not yaxis_abs_log
-            else "Abs. of natural logarithm of Modularity increase"
+            "Modularity "+r'(max $Q$)'
         )
         ylabel = kwargs.get("ylabel", ylabel_default)
         ax.set_ylabel(ylabel)
 
     def _set_xaxis_label_inverted(self, yaxis_abs_log, kwargs, ax):
         ylabel_default = (
-            "Modularity increase"
-            if not yaxis_abs_log
-            else "Abs. of natural logarithm of Modularity increase"
+            "Modularity "+r'(max $Q$)'
         )
         ylabel = kwargs.get("ylabel", ylabel_default)
         ax.set_xlabel(ylabel)
