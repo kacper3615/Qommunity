@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any
 import matplotlib.axes
 import matplotlib.figure
 import networkx as nx
@@ -7,9 +7,8 @@ import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 import math
-import seaborn as sns
 
-from .utils import nodes_to_communities, get_autoscaled_colormap, autoscale_fig_width
+from .utils import nodes_to_communities, autoscale_fig_width
 
 
 class Dendrogram:
@@ -122,6 +121,10 @@ class Dendrogram:
         The leafs represent the elements of the communities detected,
         the clades represent the course of the recursive splits (divisions).
 
+        The dendrogram is plotted in a vertical orientation - leafs on the X axis, 
+        correspondent modularity increase on the Y axis. Plotting the dendrogram 
+        horizontally is handled by the `draw_horizontal` method.
+
         Args:
             display_leafs (bool, optional):
                 ``True`` (default)
@@ -188,7 +191,7 @@ class Dendrogram:
 
             figsize (tuple | None, optional):
                 If not `None`, a new fig and ax will be created with a given figsize.
-                If `None`, will be ignored and other parameters (ax, fig) will be taken into 
+                If `None`, will be ignored and other parameters (ax, fig) will be taken into
                 account when establishing new ax and fig.
                 Allows the user to specify the size of the plot in a more friendly way
                 than passing ax and fig.
@@ -222,7 +225,7 @@ class Dendrogram:
             node_positions=node_positions,
             cluster_colors=cluster_colors,
         )
-        self._mark_modularity_increments(ax, Y_levels, nodes)
+        self._mark_modularity_increments_style2(ax, Y_levels, nodes)
 
         xlabel_rot_angle = xlabel_rotation if xlabel_rotation else 0
 
@@ -309,6 +312,108 @@ class Dendrogram:
         if show_plot:
             plt.show()
 
+    def draw_horizontal(
+        self,
+        yaxis_abs_log: bool = False,
+        node_labels_mapping: dict[int | Any, Any] | None = None,
+        ylabel_rotation: float | None = None,
+        fig_saving_path: str | None = None,
+        show_plot: bool = True,
+        color_seed: int | None = None,
+        ax: matplotlib.axes.Axes | None = None,  # May be moved to kwargs later
+        fig: matplotlib.figure.Figure | None = None,  # May be moved to kwargs later
+        figsize: tuple | None = None,
+        **kwargs,
+    ):
+        """
+        Plotting the dendrgram in a horizontal orientation.
+        Leafs are plotted on the Y axis,
+
+        Args:
+            yaxis_abs_log (bool, optional): _description_. Defaults to False.
+            node_labels_mapping (dict[int  |  Any, Any] | None, optional): _description_. Defaults to None.
+            ylabel_rotation (float | None, optional): _description_. Defaults to None.
+            fig_saving_path (str | None, optional): _description_. Defaults to None.
+            show_plot (bool, optional): _description_. Defaults to True.
+            color_seed (int | None, optional): _description_. Defaults to None.
+            ax (matplotlib.axes.Axes | None, optional): _description_. Defaults to None.
+        """
+        Y_levels, _ = self._caluclate_Y_levels(yaxis_abs_log)
+
+        # TODO - implement color maps (cmaps)
+        if color_seed:
+            self._set_random_colors_with_seed(color_seed)
+        # Default color options
+        colors = self._cluster_colors_list
+        cluster_colors = self._cluster_colors_dict
+
+        # Define the mapping between nodes and their position on the plot
+        nodes = np.array(self.G.nodes)
+        leafs_clustering_ordering = [c for cluster in self.communities for c in cluster]
+        node_positions = {
+            leaf: node for node, leaf in zip(nodes, leafs_clustering_ordering)
+        }
+
+        if figsize:
+            fig, ax = plt.subplots(figsize=figsize)
+        else:
+            fig, ax = self._handle_ax_fig_situation(ax, fig, kwargs)
+
+        # Invert axes
+        ax.invert_yaxis()
+        ax.yaxis.tick_right()
+        ax.yaxis.set_label_position("right")
+
+        # Plot the base
+        self._draw_tree_base_horizontal(
+            ax=ax,
+            Y_levels=Y_levels,
+            node_positions=node_positions,
+            cluster_colors=cluster_colors,
+        )
+
+        ylabel_rot_angle = ylabel_rotation if ylabel_rotation else 0
+
+        self._set_title(kwargs, ax)
+        self._set_yaxis_label_inverted(kwargs, ax)
+        self._set_xaxis_label_inverted(yaxis_abs_log, kwargs, ax)
+
+        # Leafs go to Y axis
+        ax.set_yticks(nodes)
+        self._set_leafs_as_ylabels(
+            ax=ax,
+            leafs_clustering_ordering=leafs_clustering_ordering,
+            node_labels_mapping=node_labels_mapping,
+            cluster_colors=cluster_colors,
+            ylabel_rot=ylabel_rot_angle,
+        )
+
+        ax.set_xticks([0] + Y_levels)
+        ax.axvline(x=0, color="gray", linestyle="--", linewidth=0.8)
+
+        # Hide plot box borders (spines)
+        ax.spines["top"].set_visible(False)
+        ax.spines["right"].set_visible(False)
+        ax.spines["bottom"].set_visible(True)
+        ax.spines["left"].set_visible(True)
+
+        plt.tight_layout()
+
+        if fig_saving_path:
+            try:
+                fig.savefig(fig_saving_path)
+            except Exception as e:
+                print(f"Exception occured while saving figure: {e}")
+
+            # For serialization purposes
+            # - in case of producing dendrograms in a loop
+            # so that mplib does not "hang" on a particular figure
+            if not show_plot:
+                plt.close(fig)
+
+        if show_plot:
+            plt.show()
+
     def _draw_tree_base(
         self,
         ax,
@@ -326,14 +431,16 @@ class Dendrogram:
         hier_line_alpha = 0.8
 
         horizontal_coords = {}
-        # Iterate bottom-up through division tree
+        # Traverse the division tree bottom-up
         for level in reversed(range(len(division_tree))):
             level_clustering = division_tree[level]
 
             # LEAFS - Case of final division tree level (communities detected):
             if level == len(division_tree) - 1:
                 for cluster in level_clustering:
-                    cluster_leafs_positioned = [node_positions[node] for node in cluster]
+                    cluster_leafs_positioned = [
+                        node_positions[node] for node in cluster
+                    ]
 
                     base_modularity_zero = self.division_modularities[0]
 
@@ -457,6 +564,138 @@ class Dendrogram:
                             alpha=hier_line_alpha,
                         )
 
+    def _draw_tree_base_horizontal(
+        self,
+        ax,
+        Y_levels: list[float],
+        node_positions: dict[int, int],
+        cluster_colors: dict[int, tuple],
+        **kwargs,
+    ):
+        division_tree = self.division_tree
+
+        # Esthetics
+        vline_color = "gray"
+        hline_color = "gray"
+        hier_line_alpha = 0.8
+
+        # Store positions of the nodes
+        vertical_coords = {}
+
+        # Iterate the division tree bottom -> up
+        for level in reversed(range(len(division_tree))):
+            level_clustering = division_tree[level]
+
+            if level == len(division_tree) - 1:
+                for i, cluster in enumerate(level_clustering):
+                    cluster_leafs_positioned = [
+                        node_positions[node] for node in cluster
+                    ]
+
+                    base_modularity_zero = self.division_modularities[0]
+
+                    # Adjust coordinates for the rotated plot
+                    ymin = min(cluster_leafs_positioned)
+                    ymax = max(cluster_leafs_positioned)
+                    ymid = (ymin + ymax) / 2
+
+                    xmin = base_modularity_zero
+                    xmax = Y_levels[level - 1]
+
+                    # Change vlines to hlines for horizontal dendrogram
+                    ax.hlines(
+                        y=ymid,
+                        xmin=xmin,
+                        xmax=xmax,
+                        colors=vline_color,
+                        alpha=hier_line_alpha,
+                    )
+
+                    vertical_coords[hash(tuple(cluster))] = ymid
+
+                    for j, y in enumerate(cluster_leafs_positioned):
+                        # Scatter the points (rotate coordinates)
+                        ax.scatter(
+                            base_modularity_zero,
+                            y,
+                            color=cluster_colors[hash(tuple(cluster))],
+                            s=50,
+                            alpha=1,
+                        )
+
+                    # Change hlines to vlines
+                    ax.vlines(
+                        x=base_modularity_zero,
+                        ymin=ymin,
+                        ymax=ymax,
+                        colors=cluster_colors[hash(tuple(cluster))],
+                        alpha=0.6,
+                        linewidth=3,
+                    )
+
+            else:
+                subsequent_clusters = division_tree[level + 1]
+                subclusters = {}
+
+                for i, subsequent_cluster in enumerate(subsequent_clusters):
+                    for j, cluster in enumerate(level_clustering):
+                        if set(subsequent_cluster).issubset(set(cluster)):
+                            if j not in subclusters.keys():
+                                subclusters[j] = subsequent_cluster
+                            else:
+                                subclusters[j] = (
+                                    subclusters.get(j),
+                                    subsequent_cluster,
+                                )
+
+                for i, cluster in enumerate(level_clustering):
+                    x = Y_levels[level]
+
+                    if type(subclusters[i]) == tuple:
+                        c0, c1 = subclusters[i]
+                        key1, key2 = hash(tuple(c0)), hash(tuple(c1))
+
+                        if (
+                            key1 in vertical_coords.keys()
+                            and key2 in vertical_coords.keys()
+                        ):
+                            mid_c0 = vertical_coords[key1]
+                            mid_c1 = vertical_coords[key2]
+                            mid = (mid_c0 + mid_c1) / 2
+                            vertical_coords[hash(tuple(cluster))] = mid
+
+                            xmin = x
+                            xmax = Y_levels[level - 1]
+
+                            if level != 0:
+                                ax.hlines(
+                                    y=mid,
+                                    xmin=xmin,
+                                    xmax=xmax,
+                                    colors=vline_color,
+                                    alpha=hier_line_alpha,
+                                )
+
+                        ax.vlines(
+                            x=x,
+                            ymin=mid_c0,
+                            ymax=mid_c1,
+                            colors=hline_color,
+                            alpha=hier_line_alpha,
+                        )
+
+                    elif type(subclusters[i]) == list and level != 0:
+                        mid_c0 = vertical_coords[hash(tuple(cluster))]
+                        xmin = x
+                        xmax = Y_levels[level - 1]
+                        ax.hlines(
+                            y=mid_c0,
+                            xmin=xmin,
+                            xmax=xmax,
+                            colors=vline_color,
+                            alpha=hier_line_alpha,
+                        )
+
     def _mark_modularity_increments(self, ax, Y_levels, nodes):
         x_annotation_line = max(nodes) + 2
         Y_levels_reversed = list(reversed(Y_levels))
@@ -479,14 +718,67 @@ class Dendrogram:
 
             ax.annotate(
                 f"{y_increment_value:.4f}",
-                # xy=(x_annotation_line + 0.35, (ymin + ymax) / 2),
-                xy=(x_annotation_line + 0.4, (ymin + ymax) / 2),
+                xy=(x_annotation_line + 0.35, (ymin + ymax) / 2),
                 xytext=(40, 0),
                 textcoords="offset points",
                 ha="right",
                 va="center",
                 color=color,
                 arrowprops=dict(arrowstyle="-[", lw=1.0, color="black"),
+            )
+
+            ymin = ymax
+
+    def _mark_modularity_increments_style2(self, ax, Y_levels, nodes):
+        x_annotation_line = max(nodes) + 2
+
+        Y_levels_reversed = list(reversed(Y_levels))
+        ymin = self.division_modularities[0]  # 0
+
+        for y in Y_levels_reversed:
+            ymax = y
+            y_increment_value = ymax - ymin
+            dash_margin = 0
+            color = "gray"
+
+            ax.vlines(
+                x=x_annotation_line,
+                ymin=ymin + dash_margin,
+                ymax=ymax - dash_margin,
+                color=color,
+                linestyle="--",
+                linewidth=1.5,
+                alpha=0.6,
+            )
+
+            horizontal_line_length = 0.6
+            ax.hlines(
+                y=ymin + dash_margin,
+                xmin=x_annotation_line - horizontal_line_length,
+                xmax=x_annotation_line,
+                color=color,
+                linestyle="-",
+                linewidth=1.5,
+                alpha=0.6,
+            )
+            ax.hlines(
+                y=ymax - dash_margin,
+                xmin=x_annotation_line - horizontal_line_length,
+                xmax=x_annotation_line,
+                color=color,
+                linestyle="-",
+                linewidth=1.5,
+                alpha=0.6,
+            )
+
+            ax.annotate(
+                f"{y_increment_value:.4f}",
+                xy=(x_annotation_line + 0.35, (ymin + ymax) / 2),
+                xytext=(40, 0),
+                textcoords="offset points",
+                ha="right",
+                va="center",
+                color="gray",
             )
 
             ymin = ymax
@@ -530,6 +822,46 @@ class Dendrogram:
                 label.set_fontweight("bold")
 
         ax.xaxis.set_ticks_position("bottom")
+
+    def _set_leafs_as_ylabels(
+        self,
+        ax,
+        leafs_clustering_ordering,
+        node_labels_mapping,
+        cluster_colors,
+        ylabel_rot,
+    ):
+        node_to_cluster_id = nodes_to_communities(self.communities)
+        cluster_id_to_hash = {
+            i: hash(tuple(cluster)) for i, cluster in enumerate(self.communities)
+        }
+
+        ax.yaxis.set_ticks_position("left")
+
+        if node_labels_mapping:
+            ax.set_yticklabels(
+                [node_labels_mapping[n] for n in leafs_clustering_ordering],
+                rotation=ylabel_rot,
+            )
+            labels_to_nodes = {v: k for k, v in node_labels_mapping.items()}
+
+            for label in ax.get_yticklabels():
+                node_num = int(labels_to_nodes[label.get_text()])
+                cluster_id = node_to_cluster_id[node_num]
+                label.set_color(cluster_colors[cluster_id_to_hash[cluster_id]])
+                label.set_fontweight("bold")
+
+        else:
+            ax.set_yticklabels(
+                [str(n) for n in leafs_clustering_ordering],
+                rotation=ylabel_rot,
+            )
+
+            for label in ax.get_yticklabels():
+                node_num = int(label.get_text())
+                cluster_id = node_to_cluster_id[node_num]
+                label.set_color(cluster_colors[cluster_id_to_hash[cluster_id]])
+                label.set_fontweight("bold")
 
     def _set_communities_as_xlabels(
         self, ax, node_positions, communities_labels, cluster_colors, xlabel_rot
@@ -610,10 +942,23 @@ class Dendrogram:
         ylabel = kwargs.get("ylabel", ylabel_default)
         ax.set_ylabel(ylabel)
 
+    def _set_xaxis_label_inverted(self, yaxis_abs_log, kwargs, ax):
+        ylabel_default = (
+            "Modularity increase"
+            if not yaxis_abs_log
+            else "Abs. of natural logarithm of Modularity increase"
+        )
+        ylabel = kwargs.get("ylabel", ylabel_default)
+        ax.set_xlabel(ylabel)
+
     def _set_xaxis_label(self, kwargs, ax):
-        xlabel = kwargs.get("xlabel", "Leafs (final division of graph nodes)")
+        xlabel = kwargs.get("xlabel", " ")
         ax.set_xlabel(xlabel)
 
+    def _set_yaxis_label_inverted(self, kwargs, ax):
+        xlabel = kwargs.get("xlabel", " ")
+        ax.set_ylabel(xlabel)
+
     def _set_title(self, kwargs, ax):
-        title = kwargs.get("title", "Hierarchical Clustering Dendrogram")
+        title = kwargs.get("title", " ")
         ax.set_title(title)
