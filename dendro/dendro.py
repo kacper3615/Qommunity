@@ -110,7 +110,7 @@ class Dendrogram:
         The dendrogram illustrates the increments in the metric of modularity
         on each recursion (hierarchy) level of the hierarchical community search.
         The increments are usually quite small as the recursive search progresses,
-        hence it is recommended to set yaxis_abs_log to True for to incrase visibility.
+        hence it is recommended to set `yaxis_abs_log` to True for to incrase readability.
 
         The dendrogram plots leafs on the X axis, which represent the nodes of
         the input graph and visualises their membership in the detected communities,
@@ -122,8 +122,8 @@ class Dendrogram:
         the clades represent the course of the recursive splits (divisions).
 
         The dendrogram is plotted in a vertical orientation - leafs on the X axis, 
-        correspondent modularity increase on the Y axis. Plotting the dendrogram 
-        horizontally is handled by the `draw_horizontal` method.
+        correspondent modularity increase on the Y axis (default). To plot the dendrogram
+        horizontally, use the `draw_horizontal` method.
 
         Args:
             display_leafs (bool, optional):
@@ -327,16 +327,61 @@ class Dendrogram:
     ):
         """
         Plotting the dendrgram in a horizontal orientation.
-        Leafs are plotted on the Y axis,
+        Axes X and Y are inverted - leafs are plotted on the Y axis, modularity increments
+        on the X axis.
 
         Args:
-            yaxis_abs_log (bool, optional): _description_. Defaults to False.
-            node_labels_mapping (dict[int  |  Any, Any] | None, optional): _description_. Defaults to None.
-            ylabel_rotation (float | None, optional): _description_. Defaults to None.
-            fig_saving_path (str | None, optional): _description_. Defaults to None.
-            show_plot (bool, optional): _description_. Defaults to True.
-            color_seed (int | None, optional): _description_. Defaults to None.
-            ax (matplotlib.axes.Axes | None, optional): _description_. Defaults to None.
+            yaxis_abs_log (bool, optional): Defaults to False.
+                Take absolute value of natural logarithm of modularity increments;
+                In the case of horizontal orientation, the axes are inverted, hence 
+                the transform is marked on the X axis. The "y" in the name stays for
+                conventional terminology reasons.
+
+            node_labels_mapping (dict[int, Any] | None, optional):
+                Set custom labels to leafs. Defaults to None - the default numbering.
+                The mapping must be a dict of pairs (node, label), where nodes are original
+                graph nodes and labels are the custom labels.
+
+            xlabel_rotation (float | None, optional):
+                Specifies the angle (in degrees) to rotate the leaf labels
+                (when ``display_leafs``= True) or the communities labels
+                (when ``display_leafs``= False).
+                Defaults to None (do not rotate).
+
+            fig_saving_path (str | None, optional):
+                Path to save the figure.
+
+                ``None``
+                Do not save the figure (default).
+
+                ``str``
+                Save figure to the given path.
+
+            show_plot (bool, optional):
+                Display the plot. Defaults to True.
+                Recommended to set it to false in the case of creating and saving
+                many dendrograms (in a loop) - big data serialization.
+
+            color_seed (int | None, optional):
+                Seed of the random color map generator. Defaults to None.
+
+            ax (matplotlib.axes.Axes | None, optional):
+                Axes to plot the dendrogram on.
+                If `None`, a new figure and axes instance will be created (default).
+                This can be useful if the proper figsize scaling is difficult to achieve.
+                The user can experiment with different plot sizes and chose the best one.
+
+            fig (matplotlib.figure.Figure | None, optional):
+                Goes together with the ax param.
+                If `None` and `ax` is None, a new figure and axes instance will be created
+                (default). If exactly one of them is not None, a ValueError will be raised.
+
+            figsize (tuple | None, optional):
+                If not `None`, a new fig and ax will be created with a given figsize.
+                If `None`, will be ignored and other parameters (ax, fig) will be taken into
+                account when establishing new ax and fig.
+                Allows the user to specify the size of the plot in a more friendly way
+                than passing ax and fig.
         """
         Y_levels, _ = self._caluclate_Y_levels(yaxis_abs_log)
 
@@ -347,8 +392,10 @@ class Dendrogram:
         colors = self._cluster_colors_list
         cluster_colors = self._cluster_colors_dict
 
-        # Define the mapping between nodes and their position on the plot
+        # Orders in which leafs (nodes) appear in the final clustering
+        # for dendrogram readability/esthetics purposes
         nodes = np.array(self.G.nodes)
+        # Dict of pairs (leaf - order in final clustering, initial node number)
         leafs_clustering_ordering = [c for cluster in self.communities for c in cluster]
         node_positions = {
             leaf: node for node, leaf in zip(nodes, leafs_clustering_ordering)
@@ -431,11 +478,15 @@ class Dendrogram:
         hier_line_alpha = 0.8
 
         horizontal_coords = {}
-        # Traverse the division tree bottom-up
+        # Traverse the division tree bottom->up
         for level in reversed(range(len(division_tree))):
             level_clustering = division_tree[level]
 
-            # LEAFS - Case of final division tree level (communities detected):
+            # CASE OF FINAL CLUSTERING (LEAFS):
+            # For every cluster in the final clustering:
+            #   For every leaf in a cluster:
+            #       1. scatter it and draw a vertical line coming from it
+            #   2. then draw one horizontal line for visually agglomerating a cluster
             if level == len(division_tree) - 1:
                 for cluster in level_clustering:
                     cluster_leafs_positioned = [
@@ -444,10 +495,12 @@ class Dendrogram:
 
                     base_modularity_zero = self.division_modularities[0]
 
+                    # x (horizontal) corrds of the cluster - to know where to start and stop drawing
                     xmin = min(cluster_leafs_positioned)
                     xmax = max(cluster_leafs_positioned)
                     xmid = (xmin + xmax) / 2
 
+                    # In the case of final clustering ymin is the ground/base of 0
                     ymin = base_modularity_zero
                     ymax = Y_levels[level - 1]
                     ax.vlines(
@@ -457,9 +510,11 @@ class Dendrogram:
                         colors=vline_color,
                         alpha=hier_line_alpha,
                     )
+                    # Mark x coord mids to know where to simplify plotting the next dendrogram hierarchy level
                     horizontal_coords[hash(tuple(cluster))] = xmid
 
                     if display_nodes:
+                        # 1.
                         for x in cluster_leafs_positioned:
                             ax.scatter(
                                 x,
@@ -469,6 +524,7 @@ class Dendrogram:
                                 alpha=1,
                             )
 
+                        # 2.
                         ax.hlines(
                             y=base_modularity_zero,
                             xmin=xmin,
@@ -479,6 +535,7 @@ class Dendrogram:
                         )
 
                     else:
+                        # 2.
                         ax.hlines(
                             y=base_modularity_zero,
                             xmin=xmin,
@@ -488,13 +545,38 @@ class Dendrogram:
                             linewidth=5,
                         )
 
-            # CLADES - Case of non-final division tree levels
+            # CASE OF NON-FINAL DIVISION TREE LEVELS (CLADES):
             else:
+                # In a currently considered hierarchy level of the division tree:
+                # A. For each cluster in the clustering of that level:
+                #   1. find subclusters of this cluster (the later division of that cluster),
+                #      called "subsequent clusters" below;
+                #      to know, where to start and end plotting lines (calculate positions);
+                #      paying attention to: the order of the clusters in each level of the division tree
+                #      shall not be taken for granted, hence we do a double "for" loop;
+                #   2. draw appropriate plot elements corresponding to this level of the division tree:
+                #      - vertical line connecting "subsequent" (check glossary below) divisions
+                #        with the current division;
+                #      - horizontal line (Y axis markers) correspondant to that level;
+
+                # B. IMPORTANT: Note that on each hierarchy level of the hierarchical search method
+                # a further division of a given cluster may or may not occur. (A community might,
+                # but might not be further divided in later hierarchical search calls.)
+                #
+                # That's why a considered community may have:
+                #   1. only one subcluster ("simplicifolious") - itself 
+                #      (in a case of no further divisions),
+                #   2. two subclusters (in the case of further binary division).
+                # The two cases are handled.
+
+                # GLOSSARY:
+                # "Subsequent" - meaning:
+                # one hierarchy level lower (deeper) in the division tree <=> ...
+                # ... <=> one hierarchy level higher in a reversed division tree
                 subsequent_clusters = division_tree[level + 1]
                 subclusters = {}
 
                 # A.1
-                # Find the later division of this cluster (subclusters)
                 for subsequent_cluster in subsequent_clusters:
                     for cluster in level_clustering:
                         if set(subsequent_cluster).issubset(set(cluster)):
@@ -513,11 +595,10 @@ class Dendrogram:
 
                     # CASE B.2:
                     # two subcommunities - tuple (of lists)
-                    # If the further division was into 2 subclusters (subcommunities)
                     if type(subclusters[key_clus]) == tuple:
                         c0, c1 = subclusters[key_clus]
                         key1, key2 = hash(tuple(c0)), hash(tuple(c1))
-                        # Update horizonatl (index) coords
+                        # Coords for plotting
                         if (
                             key1 in horizontal_coords.keys()
                             and key2 in horizontal_coords.keys()
