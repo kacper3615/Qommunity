@@ -2,7 +2,7 @@ from Qommunity.samplers.hierarchical.hierarchical_sampler import HierarchicalSam
 import networkx as nx
 
 
-class HierarchicalCommunitySearcher:
+class HierarchicalSearcher:
     def __init__(self, sampler: HierarchicalSampler) -> None:
         self.sampler = sampler
 

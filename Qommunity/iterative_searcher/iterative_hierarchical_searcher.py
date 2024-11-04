@@ -1,6 +1,6 @@
 from Qommunity.samplers.hierarchical.hierarchical_sampler import HierarchicalSampler
-from Qommunity.searchers.hierarchical_community_searcher import (
-    HierarchicalCommunitySearcher,
+from Qommunity.searchers.hierarchical_searcher import (
+    HierarchicalSearcher,
 )
 import networkx as nx
 from time import time
@@ -23,10 +23,10 @@ warnings.showwarning = warn
 warnings.simplefilter("always", MethodArgsWarning)
 
 
-class IterativeSearcherHierarchical:
+class IterativeHierarchicalSearcher:
     def __init__(self, sampler: HierarchicalSampler) -> None:
         self.sampler = sampler
-        self.searcher = HierarchicalCommunitySearcher(self.sampler)
+        self.searcher = HierarchicalSearcher(self.sampler)
 
     def _default_saving_path(self) -> str:
         return (
