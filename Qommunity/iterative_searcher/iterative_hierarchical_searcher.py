@@ -16,7 +16,7 @@ class MethodArgsWarning(Warning):
 
 # Warning format compatible with tqdm
 def warn(message, category, filename, lineno, file=None, line=None):
-    tqdm.write("Warning: {str(message)}")
+    tqdm.write(f"Warning: {str(message)}")
 
 
 warnings.showwarning = warn
