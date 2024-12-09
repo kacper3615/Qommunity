@@ -89,7 +89,7 @@ class IterativeHierarchicalSearcher:
             modularities[iter] = modularity_score
 
             if save_results:
-                np.save(f"{saving_path}", modularities)
+                np.save(f"{saving_path}_mods", modularities)
                 np.save(f"{saving_path}_comms", communities)
                 if elapse_times:
                     np.save(f"{saving_path}_times", times)
@@ -122,6 +122,18 @@ class IterativeHierarchicalSearcher:
         division_modularities = np.empty((num_runs), dtype=object)
         division_trees = np.empty((num_runs), dtype=object)
 
+        dtypes = [
+            ("communities", object),
+            ("modularity", np.float_),
+            ("time", np.float_),
+            ("division_tree", object),
+            ("division_modularities", object),
+        ]
+        sampleset = np.rec.fromarrays(
+            [communities, modularities, times, division_trees, division_modularities],
+            dtype=dtypes,
+        )
+
         for iter in tqdm(range(num_runs)):
             elapsed = time()
             (
@@ -150,24 +162,18 @@ class IterativeHierarchicalSearcher:
             communities[iter] = communities_result
             modularities[iter] = modularity_score
 
+            sampleset[iter] = (
+                communities_result,
+                modularity_score,
+                times[iter],
+                div_tree,
+                div_modularities,
+            )
+
             if save_results:
-                np.save(f"{saving_path}", modularities)
-                np.save(f"{saving_path}_comms", communities)
-                np.save(f"{saving_path}_times", times)
+                np.save(f"{saving_path}_sampleset", sampleset)
 
             if iterative_verbosity >= 1:
                 print(f"Iteration {iter} completed")
-
-        dtypes = [
-            ("communities", object),
-            ("modularity", np.float_),
-            ("time", np.float_),
-            ("division_tree", object),
-            ("division_modularities", object),
-        ]
-        sampleset = np.rec.fromarrays(
-            [communities, modularities, times, division_trees, division_modularities],
-            dtype=dtypes,
-        )
 
         return sampleset
