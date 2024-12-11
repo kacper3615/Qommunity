@@ -1,5 +1,8 @@
+import numpy as np
 import seaborn as sns
-import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
+
+from .dendro_config import FIG_AUTOSCALING
 
 
 def nodes_to_communities(communities: list) -> dict:
@@ -10,32 +13,54 @@ def nodes_to_communities(communities: list) -> dict:
     return result
 
 
-def get_autoscaled_colormap(n_clusters, communities):
-    if n_clusters <= 10:
-        return sns.color_palette("hsv", len(communities))
-    elif n_clusters <= 20:
-        cmap = plt.get_cmap("tab20", n_clusters)
-        return [cmap(i % 10) for i in range(len(communities))]
+def is_valid_color(color):
+    try:
+        # Converts any valid color to RGBA
+        mcolors.to_rgba(color)
+        return True
+    except ValueError as ve:
+        print(ve)
+        return False
+
+
+def get_colorlist(
+    cmap: mcolors.ListedColormap | sns.palettes._ColorPalette | list, n_communities: int
+):
+    length_err_msg = (
+        "The number of colors in the colormap must be "
+        "at least equal to the number of communities."
+    )
+    if isinstance(cmap, list):
+        # Too little colors to paint all communities
+        if len(cmap) < n_communities:
+            raise ValueError(length_err_msg)
+        validated = [is_valid_color(color) for color in cmap]
+        # Invalid colors
+        if not all(validated):
+            invalid = np.array(cmap)[np.array(validated) == False].tolist()
+            raise ValueError(f"Invalid colors in the colormap: {invalid}")
+        return cmap
+
+    elif isinstance(cmap, mcolors.ListedColormap):
+        if len(cmap.colors) < n_communities:
+            raise ValueError(length_err_msg)
+        return cmap.colors
+
+    elif isinstance(cmap, sns.palettes._ColorPalette):
+        if len(cmap) < n_communities:
+            raise ValueError(length_err_msg)
+        return cmap
     else:
-        cmap = plt.get_cmap("hsv", n_clusters)
-        return [cmap(i % 10) for i in range(len(communities))]
+        raise ValueError(
+            "Unsupported colormap type. The supported types are: "
+            "list, matplotlib.colors.ListedColormap and "
+            "seaborn.palettes._ColorPalette."
+        )
 
 
-# TODO
-def autoscale_fig_width(nodes: list) -> float:
-    num_nodes = len(nodes)
-    base_width = 10
-    node_factor = 0.4
-    width = base_width + num_nodes * node_factor
-    max_width = 100
-    return min(width, max_width)
-
-
-# TODO
-def autoscale_fig_height(nodes: list) -> float:
-    num_nodes = len(nodes)
-    base_height = 5
-    height_factor = 0.3
-    height = base_height + num_nodes * height_factor
-    max_height = 30
-    return min(height, max_height)
+def autoscale_fig_width(num_nodes: int) -> float:
+    default_fig_width = FIG_AUTOSCALING["default_fig_width"]
+    node_factor = FIG_AUTOSCALING["node_factor"]
+    max_fig_width = FIG_AUTOSCALING["max_fig_width"]
+    width = default_fig_width + num_nodes * node_factor
+    return min(width, max_fig_width)
