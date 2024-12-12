@@ -1,7 +1,7 @@
 from Qommunity.samplers.regular.regular_sampler import RegularSampler
 
 
-class CommunitySearcher:
+class RegularSearcher:
     def __init__(self, sampler: RegularSampler) -> None:
         self.sampler = sampler
 

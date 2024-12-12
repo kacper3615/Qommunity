@@ -1,15 +1,15 @@
 from Qommunity.samplers.regular.regular_sampler import RegularSampler
-from Qommunity.searchers.community_searcher import CommunitySearcher
+from Qommunity.searchers.regular_searcher import RegularSearcher
 import networkx as nx
 from time import time
 from tqdm import tqdm
 import numpy as np
 
 
-class IterativeSearcherRegular:
+class IterativeRegularSearcher:
     def __init__(self, sampler: RegularSampler) -> None:
         self.sampler = sampler
-        self.searcher = CommunitySearcher(self.sampler)
+        self.searcher = RegularSearcher(self.sampler)
 
     def _default_saving_path(self) -> str:
         return (

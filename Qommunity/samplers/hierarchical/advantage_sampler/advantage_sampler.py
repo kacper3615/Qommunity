@@ -13,7 +13,7 @@ class AdvantageSampler(HierarchicalSampler):
         use_weights: bool = True,
         version: str = "Advantage_system5.4",
         region: str = "eu-central-1",
-        num_reads: int = 1,
+        num_reads: int = 100,
         chain_strength: float | None = None,
         use_clique_embedding: bool = False,
     ) -> None:
