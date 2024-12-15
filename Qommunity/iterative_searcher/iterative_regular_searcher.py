@@ -44,7 +44,9 @@ class IterativeRegularSearcher:
 
             try:
                 modularity_score = nx.community.modularity(
-                    self.searcher.sampler.G, result, resolution=self.sampler.resolution
+                    self.searcher.sampler.G,
+                    result,
+                    resolution=self.sampler.resolution,
                 )
             except Exception as e:
                 print(f"iteration: {iter} exception: {e}")
@@ -54,8 +56,8 @@ class IterativeRegularSearcher:
             modularities[iter] = modularity_score
 
             if save_results:
-                np.save(f"{saving_path}", modularities)
-                np.save(f"{saving_path}_comms", communities)
+                np.save(f"{saving_path}_modularities", modularities)
+                np.save(f"{saving_path}_communities", communities)
                 if elapse_times:
                     np.save(f"{saving_path}_times", times)
 

@@ -1,9 +1,13 @@
-from Qommunity.samplers.hierarchical.hierarchical_sampler import HierarchicalSampler
+from Qommunity.samplers.hierarchical.hierarchical_sampler import (
+    HierarchicalSampler,
+)
 from Qommunity.samplers.regular.regular_sampler import RegularSampler
 from Qommunity.iterative_searcher.iterative_hierarchical_searcher import (
     IterativeHierarchicalSearcher,
 )
-from Qommunity.iterative_searcher.iterative_regular_searcher import IterativeRegularSearcher
+from Qommunity.iterative_searcher.iterative_regular_searcher import (
+    IterativeRegularSearcher,
+)
 
 
 class IterativeSearcher:

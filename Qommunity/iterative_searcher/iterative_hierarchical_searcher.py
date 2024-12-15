@@ -1,4 +1,6 @@
-from Qommunity.samplers.hierarchical.hierarchical_sampler import HierarchicalSampler
+from Qommunity.samplers.hierarchical.hierarchical_sampler import (
+    HierarchicalSampler,
+)
 from Qommunity.searchers.hierarchical_searcher import (
     HierarchicalSearcher,
 )
@@ -79,7 +81,9 @@ class IterativeHierarchicalSearcher:
 
             try:
                 modularity_score = nx.community.modularity(
-                    self.searcher.sampler.G, result, resolution=self.sampler.resolution
+                    self.searcher.sampler.G,
+                    result,
+                    resolution=self.sampler.resolution,
                 )
             except Exception as e:
                 print(f"iteration: {iter} exception: {e}")
@@ -89,8 +93,8 @@ class IterativeHierarchicalSearcher:
             modularities[iter] = modularity_score
 
             if save_results:
-                np.save(f"{saving_path}", modularities)
-                np.save(f"{saving_path}_comms", communities)
+                np.save(f"{saving_path}_modularities", modularities)
+                np.save(f"{saving_path}_communities", communities)
                 if elapse_times:
                     np.save(f"{saving_path}_times", times)
 
@@ -151,9 +155,14 @@ class IterativeHierarchicalSearcher:
             modularities[iter] = modularity_score
 
             if save_results:
-                np.save(f"{saving_path}", modularities)
-                np.save(f"{saving_path}_comms", communities)
+                np.save(f"{saving_path}_modularities", modularities)
+                np.save(f"{saving_path}_communities", communities)
                 np.save(f"{saving_path}_times", times)
+                np.save(f"{saving_path}_division_trees", division_trees)
+                np.save(
+                    f"{saving_path}_division_modularities",
+                    division_modularities,
+                )
 
             if iterative_verbosity >= 1:
                 print(f"Iteration {iter} completed")
@@ -166,7 +175,13 @@ class IterativeHierarchicalSearcher:
             ("division_modularities", object),
         ]
         sampleset = np.rec.fromarrays(
-            [communities, modularities, times, division_trees, division_modularities],
+            [
+                communities,
+                modularities,
+                times,
+                division_trees,
+                division_modularities,
+            ],
             dtype=dtypes,
         )
 
