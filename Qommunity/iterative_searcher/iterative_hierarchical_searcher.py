@@ -93,8 +93,8 @@ class IterativeHierarchicalSearcher:
             modularities[iter] = modularity_score
 
             if save_results:
-                np.save(f"{saving_path}_mods", modularities)
-                np.save(f"{saving_path}_comms", communities)
+                np.save(f"{saving_path}_modularities", modularities)
+                np.save(f"{saving_path}_communities", communities)
                 if elapse_times:
                     np.save(f"{saving_path}_times", times)
 
