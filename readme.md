@@ -27,6 +27,3 @@ Now you are able to import QHyper using "import QHyper" instead of using relativ
 
 ## How to use library?
 At this moment, the library is pretty simple; everything you have to know is included in the **"demo.ipynb**" file
-
-## ATTENTION!
-For the library to work properly, you need to use the QHyper version from the **kacper3615/advantage** branch, at this moment advantage is not implemented on the main branch!
