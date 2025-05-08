@@ -1,7 +1,9 @@
-from QHyper.solvers.quantum_annealing.advantage import Advantage
+# from QHyper.solvers.quantum_annealing.advantage import Advantage
+from QHyper.solvers.quantum_annealing.dwave import Advantage
 from QHyper.problems.community_detection import Network, CommunityDetectionProblem
 import networkx as nx
 from ..hierarchical_sampler import HierarchicalSampler
+import numpy as np
 
 
 class AdvantageSampler(HierarchicalSampler):
@@ -52,7 +54,7 @@ class AdvantageSampler(HierarchicalSampler):
         )
         community = sample.probabilities[variables][0]
 
-        return dict(zip(variables, community))
+        return dict(zip(variables, community)), sample
 
     def update_community(self, community: list) -> None:
         self.__init__(

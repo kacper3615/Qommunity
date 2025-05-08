@@ -1,5 +1,6 @@
 from Qommunity.samplers.hierarchical.hierarchical_sampler import HierarchicalSampler
 import networkx as nx
+import numpy as np
 
 
 class HierarchicalSearcher:
@@ -43,6 +44,7 @@ class HierarchicalSearcher:
         max_depth: int | None = None,
         division_tree: bool = False,
         return_modularities: bool = False,
+        samples_filename: str | None = None,
     ) -> list:
         if verbosity >= 1:
             print("Starting community detection")
@@ -53,12 +55,17 @@ class HierarchicalSearcher:
             else:
                 division_tree = []
 
+            samples = []
+
             result = self._hierarchical_search_recursion(
                 verbosity=verbosity,
                 level=1,
                 max_depth=max_depth,
                 division_tree=division_tree,
+                samples=samples,
             )
+
+            np.save(f"{samples_filename}.npy", samples)
 
             if division_tree:
                 for i in range(1, len(division_tree)):
@@ -133,6 +140,7 @@ class HierarchicalSearcher:
         level: int,
         community: list | None = None,
         division_tree: list | None = None,
+        samples: list | None = None,
     ):
         if not community:
             community = [*range(self.sampler.G.number_of_nodes())]
@@ -154,7 +162,8 @@ class HierarchicalSearcher:
             print("===========================================")
 
         self.sampler.update_community(community)
-        sample = self.sampler.sample_qubo_to_dict()
+        sample, sampleset_full = self.sampler.sample_qubo_to_dict()
+        samples.append(sampleset_full)
 
         c0, c1 = self._split_dict_to_lists(sample, community)
 
@@ -189,12 +198,14 @@ class HierarchicalSearcher:
                     level=level + 1,
                     community=c0,
                     division_tree=division_tree,
+                    samples=samples,
                 ) + self._hierarchical_search_recursion(
                     verbosity,
                     max_depth,
                     level=level + 1,
                     community=c1,
                     division_tree=division_tree,
+                    samples=samples,
                 )
             elif c0:
                 return [c0]
