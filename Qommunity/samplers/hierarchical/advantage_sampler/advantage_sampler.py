@@ -1,4 +1,4 @@
-from QHyper.solvers.quantum_annealing.advantage import Advantage
+from QHyper.solvers.quantum_annealing.dwave.advantage import Advantage
 from QHyper.problems.community_detection import Network, CommunityDetectionProblem
 import networkx as nx
 from ..hierarchical_sampler import HierarchicalSampler
