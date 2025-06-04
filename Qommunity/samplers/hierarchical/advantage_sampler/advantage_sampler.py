@@ -58,7 +58,7 @@ class AdvantageSampler(HierarchicalSampler):
         )
         community = sample.probabilities[variables][0]
 
-        return dict(zip(variables, community)), sample
+        return dict(zip(variables, community)), sample.sampleset_info
 
     def update_community(self, community: list) -> None:
         self.__init__(
