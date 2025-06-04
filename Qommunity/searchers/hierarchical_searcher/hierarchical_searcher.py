@@ -44,12 +44,13 @@ class HierarchicalSearcher:
         max_depth: int | None = None,
         division_tree: bool = False,
         return_modularities: bool = False,
+        return_sampleset_info: bool = False,
         samples_filename: str | None = None,
     ) -> list:
         if verbosity >= 1:
             print("Starting community detection")
 
-        if max_depth == None:
+        if max_depth is None or max_depth > 1:
             if division_tree == False:
                 division_tree = None
             else:
@@ -65,7 +66,8 @@ class HierarchicalSearcher:
                 samples=samples,
             )
 
-            np.save(f"{samples_filename}.npy", samples)
+            if samples_filename is not None:
+                np.save(f"{samples_filename}.npy", samples)
 
             if division_tree:
                 for i in range(1, len(division_tree)):
@@ -118,7 +120,9 @@ class HierarchicalSearcher:
                     print("Division tree")
                     for division in division_tree:
                         print(division)
-
+            
+            if division_tree and return_modularities and return_sampleset_info:
+                return result, division_tree, division_modularities, samples
             if division_tree and return_modularities:
                 return result, division_tree, division_modularities
             if division_tree:

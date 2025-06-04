@@ -1,4 +1,3 @@
-# from QHyper.solvers.quantum_annealing.advantage import Advantage
 from QHyper.solvers.quantum_annealing.dwave import Advantage
 from QHyper.problems.community_detection import Network, CommunityDetectionProblem
 import networkx as nx
@@ -18,6 +17,8 @@ class AdvantageSampler(HierarchicalSampler):
         num_reads: int = 100,
         chain_strength: float | None = None,
         use_clique_embedding: bool = False,
+        measure_times: bool = False,
+        return_sampleset_info: bool = True,
     ) -> None:
         if not community:
             community = [*range(G.number_of_nodes())]
@@ -30,6 +31,8 @@ class AdvantageSampler(HierarchicalSampler):
         self.chain_strength = chain_strength
         self.use_clique_embedding = use_clique_embedding
         self._use_weights = use_weights
+        self.measure_times = measure_times
+        self.return_sampleset_info = return_sampleset_info
 
         weight = "weight" if use_weights else None
         network = Network(G, resolution=resolution, weight=weight, community=community)
@@ -43,10 +46,11 @@ class AdvantageSampler(HierarchicalSampler):
             num_reads=num_reads,
             chain_strength=chain_strength,
             use_clique_embedding=use_clique_embedding,
+            measure_times=measure_times
         )
 
     def sample_qubo_to_dict(self) -> dict:
-        sample = self.advantage.solve()
+        sample = self.advantage.solve(return_sampleset_info=self.return_sampleset_info)
 
         variables = sorted(
             [col for col in sample.probabilities.dtype.names if col.startswith("x")],
@@ -67,4 +71,6 @@ class AdvantageSampler(HierarchicalSampler):
             self.num_reads,
             self.chain_strength,
             self.use_clique_embedding,
+            self.measure_times,
+            self.return_sampleset_info
         )
