@@ -1,4 +1,5 @@
 from Qommunity.samplers.hierarchical.hierarchical_sampler import HierarchicalSampler
+from Qommunity.samplers.hierarchical.advantage_sampler import AdvantageSampler
 import networkx as nx
 import numpy as np
 
@@ -45,7 +46,6 @@ class HierarchicalSearcher:
         division_tree: bool = False,
         return_modularities: bool = False,
         return_sampleset_info: bool = False,
-        samples_filename: str | None = None,
     ) -> list:
         if verbosity >= 1:
             print("Starting community detection")
@@ -64,10 +64,8 @@ class HierarchicalSearcher:
                 max_depth=max_depth,
                 division_tree=division_tree,
                 samples=samples,
+                return_sampleset_info=return_sampleset_info,
             )
-
-            if samples_filename is not None:
-                np.save(f"{samples_filename}.npy", samples)
 
             if division_tree:
                 for i in range(1, len(division_tree)):
@@ -145,6 +143,7 @@ class HierarchicalSearcher:
         community: list | None = None,
         division_tree: list | None = None,
         samples: list | None = None,
+        return_sampleset_info: bool = False,
     ):
         if not community:
             community = [*range(self.sampler.G.number_of_nodes())]
@@ -166,8 +165,14 @@ class HierarchicalSearcher:
             print("===========================================")
 
         self.sampler.update_community(community)
-        sample, sampleset_full = self.sampler.sample_qubo_to_dict()
-        samples.append(sampleset_full)
+
+        if isinstance(self.sampler, AdvantageSampler) and return_sampleset_info:
+            sample, sampleset_full = self.sampler.sample_qubo_to_dict()
+            samples.append(sampleset_full)
+        else:
+            sample = self.sampler.sample_qubo_to_dict()
+
+        print(sample)
 
         c0, c1 = self._split_dict_to_lists(sample, community)
 
@@ -203,6 +208,7 @@ class HierarchicalSearcher:
                     community=c0,
                     division_tree=division_tree,
                     samples=samples,
+                    return_sampleset_info=return_sampleset_info,
                 ) + self._hierarchical_search_recursion(
                     verbosity,
                     max_depth,
@@ -210,6 +216,7 @@ class HierarchicalSearcher:
                     community=c1,
                     division_tree=division_tree,
                     samples=samples,
+                    return_sampleset_info=return_sampleset_info,
                 )
             elif c0:
                 return [c0]
