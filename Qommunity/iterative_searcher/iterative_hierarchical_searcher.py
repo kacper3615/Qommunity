@@ -10,6 +10,7 @@ from tqdm import tqdm
 import numpy as np
 import warnings
 
+SAMPLESET_METADATA_KEYARG = "return_sampleset_metadata"
 
 class MethodArgsWarning(Warning):
     def __init__(self, msg):
@@ -60,7 +61,7 @@ class IterativeHierarchicalSearcher:
         saving_path: str | None = None,
         elapse_times: bool = True,
         iterative_verbosity: int = 0,
-        return_sampleset_info: bool = False,
+        return_sampleset_metadata: bool = False,
         **kwargs,
     ):
         kwargs = self._verify_kwargs(kwargs)
@@ -74,15 +75,15 @@ class IterativeHierarchicalSearcher:
         modularities = np.zeros((num_runs))
         communities = np.empty((num_runs), dtype=object)
         times = np.zeros((num_runs))
-        sampleset_infos = np.empty((num_runs), dtype=object)
+        samplesets_data = np.empty((num_runs), dtype=object)
 
         for iter in tqdm(range(num_runs)):
             elapsed = time()
             result = self.searcher.hierarchical_community_search(**kwargs)
             times[iter] = time() - elapsed
 
-            if "return_sampleset_info" in kwargs:
-                result, sampleset_info = result
+            if SAMPLESET_METADATA_KEYARG in kwargs:
+                result, sampleset_metadata = result
 
             try:
                 modularity_score = nx.community.modularity(
@@ -96,25 +97,25 @@ class IterativeHierarchicalSearcher:
 
             communities[iter] = result
             modularities[iter] = modularity_score
-            sampleset_infos[iter] = sampleset_info
+            samplesets_data[iter] = sampleset_metadata
 
             if save_results:
                 np.save(f"{saving_path}_modularities", modularities)
                 np.save(f"{saving_path}_communities", communities)
                 if elapse_times:
                     np.save(f"{saving_path}_times", times)
-                if return_sampleset_info:
-                    np.save(f"{saving_path}_sampleset_infos", sampleset_infos)
+                if return_sampleset_metadata:
+                    np.save(f"{saving_path}_sampleset_infos", samplesets_data)
 
             if iterative_verbosity >= 1:
                 print(f"Iteration {iter} completed")
 
-        if elapse_times and sampleset_info:
-            return communities, modularities, times, sampleset_info
+        if elapse_times and sampleset_metadata:
+            return communities, modularities, times, sampleset_metadata
         if elapse_times:
             return communities, modularities, times
-        if return_sampleset_info:
-            return communities, modularities, sampleset_infos
+        if return_sampleset_metadata:
+            return communities, modularities, samplesets_data
         return communities, modularities
 
     def run_with_sampleset_info(
@@ -123,7 +124,7 @@ class IterativeHierarchicalSearcher:
         save_results: bool = True,
         saving_path: str | None = None,
         iterative_verbosity: int = 0,
-        return_sampleset_info: bool = True,
+        return_sampleset_metadata: bool = True,
         process_results: bool = True,
         **kwargs,
     ):
@@ -139,10 +140,10 @@ class IterativeHierarchicalSearcher:
         times = np.zeros((num_runs))
         division_modularities = np.empty((num_runs), dtype=object)
         division_trees = np.empty((num_runs), dtype=object)
-        sampleset_infos = np.empty((num_runs), dtype=object)
+        samplesets_data = np.empty((num_runs), dtype=object)
 
-        if return_sampleset_info:
-            kwargs["return_sampleset_info"] = True
+        if return_sampleset_metadata:
+            kwargs[SAMPLESET_METADATA_KEYARG] = True
 
         for iter in tqdm(range(num_runs)):
             elapsed = time()
@@ -151,12 +152,12 @@ class IterativeHierarchicalSearcher:
                 division_tree=True,
                 **kwargs,
             )
-            if return_sampleset_info:
+            if return_sampleset_metadata:
                 (
                     communities_result,
                     div_tree,
                     div_modularities,
-                    sampleset_info,
+                    sampleset_data,
                 ) = result
             else:
                 (
@@ -167,7 +168,7 @@ class IterativeHierarchicalSearcher:
             times[iter] = time() - elapsed
             division_trees[iter] = div_tree
             division_modularities[iter] = div_modularities
-            sampleset_infos[iter] = sampleset_info
+            samplesets_data[iter] = sampleset_data
 
             try:
                 modularity_score = nx.community.modularity(
@@ -191,7 +192,7 @@ class IterativeHierarchicalSearcher:
                     f"{saving_path}_division_modularities",
                     division_modularities,
                 )
-                np.save(f"{saving_path}_sampleset_infos", sampleset_infos)
+                np.save(f"{saving_path}_samplesets_data", samplesets_data)
 
             if iterative_verbosity >= 1:
                 print(f"Iteration {iter} completed")
@@ -211,9 +212,9 @@ class IterativeHierarchicalSearcher:
             division_modularities,
         ]
 
-        if return_sampleset_info:
-            dtypes.append(("sampleset_infos", object))
-            sampleset_components.append(sampleset_infos)
+        if return_sampleset_metadata:
+            dtypes.append(("samplesets_data", object))
+            sampleset_components.append(samplesets_data)
 
         sampleset = np.rec.fromarrays(
             sampleset_components,
@@ -223,17 +224,17 @@ class IterativeHierarchicalSearcher:
         if not process_results:
             return sampleset
 
-        dtype = [si.dwave_sampleset_info for si in sampleset[0].sampleset_infos][
+        dtype = [si.dwave_sampleset_info for si in sampleset[0].samplesets_data][
             0
         ].dtype.descr
-        dwave_sampleset_infos = np.array(
+        dwave_sampleset_metadata = np.array(
             [
                 np.concatenate(
                     [
                         np.array([r], dtype=dtype)
                         for r in [
                             si.dwave_sampleset_info
-                            for si in sampleset[run].sampleset_infos
+                            for si in sampleset[run].samplesets_data
                         ]
                     ]
                 ).view(np.recarray)
@@ -242,7 +243,7 @@ class IterativeHierarchicalSearcher:
             dtype=object,
         )
 
-        dtype = [si.time_measurements for si in sampleset[0].sampleset_infos][
+        dtype = [si.time_measurements for si in sampleset[0].samplesets_data][
             0
         ].dtype.descr
         time_measurements = np.array(
@@ -252,7 +253,7 @@ class IterativeHierarchicalSearcher:
                         np.array([r], dtype=dtype)
                         for r in [
                             si.time_measurements
-                            for si in sampleset[run].sampleset_infos
+                            for si in sampleset[run].samplesets_data
                         ]
                     ]
                 ).view(np.recarray)
@@ -263,7 +264,7 @@ class IterativeHierarchicalSearcher:
 
         results_procesed_dtypes = sampleset.dtype.descr
         results_procesed_dtypes.pop()
-        results_procesed_dtypes.append(("dwave_sampleset_infos", object))
+        results_procesed_dtypes.append(("dwave_sampleset_metadata", object))
         results_procesed_dtypes.append(("time_measurements", object))
         results_procesed_dtypes
 
@@ -273,7 +274,7 @@ class IterativeHierarchicalSearcher:
             sampleset.time,
             sampleset.division_tree,
             sampleset.division_modularities,
-            dwave_sampleset_infos,
+            dwave_sampleset_metadata,
             time_measurements,
         ]
 
