@@ -10,6 +10,8 @@ from tqdm import tqdm
 import numpy as np
 import warnings
 
+from Qommunity.samplers.hierarchical.advantage_sampler import AdvantageSampler
+
 SAMPLESET_METADATA_KEYARG = "return_sampleset_metadata"
 
 class MethodArgsWarning(Warning):
@@ -125,7 +127,6 @@ class IterativeHierarchicalSearcher:
         saving_path: str | None = None,
         iterative_verbosity: int = 0,
         return_sampleset_metadata: bool = True,
-        process_results: bool = True,
         **kwargs,
     ):
 
@@ -152,7 +153,11 @@ class IterativeHierarchicalSearcher:
                 division_tree=True,
                 **kwargs,
             )
-            if return_sampleset_metadata:
+            # Currently only AdvantageSampler among the hierarchical solvers
+            # provides sampleset metadata.
+            print(isinstance(self.sampler, AdvantageSampler))
+            print(return_sampleset_metadata)
+            if isinstance(self.sampler, AdvantageSampler) and return_sampleset_metadata:
                 (
                     communities_result,
                     div_tree,
@@ -221,10 +226,15 @@ class IterativeHierarchicalSearcher:
             dtype=dtypes,
         )
 
-        if not process_results:
+        if not return_sampleset_metadata:
             return sampleset
 
-        dtype = [si.dwave_sampleset_info for si in sampleset[0].samplesets_data][
+        results_processed = self._process_results(sampleset)
+
+        return results_processed
+
+    def _process_results(self, sampleset):
+        dtype = [si.dwave_sampleset_metadata for si in sampleset[0].samplesets_data][
             0
         ].dtype.descr
         dwave_sampleset_metadata = np.array(

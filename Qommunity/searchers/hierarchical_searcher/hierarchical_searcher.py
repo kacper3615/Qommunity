@@ -166,7 +166,7 @@ class HierarchicalSearcher:
 
         self.sampler.update_community(community)
 
-        # Currently only AdvantageSampler among the hierarchical solvers 
+        # Currently only AdvantageSampler among the hierarchical solvers
         # provides sampleset metadata.
         if isinstance(self.sampler, AdvantageSampler) and return_sampleset_metadata:
             sample, sampleset_full = self.sampler.sample_qubo_to_dict()
