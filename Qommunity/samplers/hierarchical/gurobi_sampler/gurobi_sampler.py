@@ -41,7 +41,15 @@ class GurobiSampler(HierarchicalSampler):
         )
 
     def sample_qubo_to_dict(self) -> dict:
-        return self.gurobi.solve()
+        sample = self.gurobi.solve()
+
+        variables = sorted(
+            [col for col in sample.probabilities.dtype.names if col.startswith("x")],
+            key=lambda x: int(x[1:]),
+        )
+        community = sample.probabilities[variables][0]
+
+        return dict(zip(variables, community))
 
     def string_to_dict(s: str, prefix: str = "x") -> dict:
         result = {f"{prefix}{i}": int(s[i]) for i in range(len(s))}
