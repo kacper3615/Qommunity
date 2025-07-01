@@ -1,7 +1,10 @@
+from dataclasses import dataclass, field
 from Qommunity.samplers.hierarchical.hierarchical_sampler import HierarchicalSampler
 from Qommunity.samplers.hierarchical.advantage_sampler import AdvantageSampler
 import networkx as nx
 import numpy as np
+from enum import Enum
+from QHyper.solvers.base import SamplesetData
 
 
 class HierarchicalSearcher:
@@ -119,6 +122,9 @@ class HierarchicalSearcher:
                     for division in division_tree:
                         print(division)
             
+            if len(samplesets_metadata) > 0 and return_sampleset_metadata:
+                samplesets_metadata = HierarchicalRunMetadata(samplesets_metadata)
+
             if division_tree and return_modularities and return_sampleset_metadata:
                 return result, division_tree, division_modularities, samplesets_metadata
             if division_tree and return_modularities:
@@ -168,7 +174,7 @@ class HierarchicalSearcher:
 
         # Currently only AdvantageSampler among the hierarchical solvers
         # provides sampleset metadata.
-        if isinstance(self.sampler, AdvantageSampler) and return_sampleset_metadata:
+        if isinstance(self.sampler, AdvantageSampler) and self.sampler.return_sampleset_metadata and return_sampleset_metadata:
             sample, sampleset_full = self.sampler.sample_qubo_to_dict()
             samplesets_metadata.append(sampleset_full)
         else:
@@ -240,3 +246,36 @@ class HierarchicalSearcher:
                 result.add(item)
 
         return result
+
+
+class FieldName(Enum):
+    DwaveSamplesetMetadata = "dwave_sampleset_metadata"
+    TimeMeasurements = "time_measurements"
+
+
+@dataclass
+class HierarchicalRunMetadata:
+    dwave_sampleset_metadata: np.recarray = field(init=False)
+    time_measurements: np.recarray = field(init=False)
+
+    def __init__(self, sampleset: list[SamplesetData]):
+        self.dwave_sampleset_metadata = self._process_samples(
+            sampleset, FieldName.DwaveSamplesetMetadata.value
+        )
+        self.time_measurements = self._process_samples(
+            sampleset, FieldName.TimeMeasurements.value
+        )
+
+    def _process_samples(
+        self, sampleset: list[SamplesetData], field_name: str
+    ) -> np.recarray:
+        dtype = [getattr(sampleset[0], field_name)][0].dtype.descr
+        concatenated = np.concatenate(
+            [
+                np.array([division_rec], dtype=dtype)
+                for division_rec in [
+                    getattr(division, field_name) for division in sampleset
+                ]
+            ]
+        ).view(np.recarray)
+        return concatenated
