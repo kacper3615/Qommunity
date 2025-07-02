@@ -133,6 +133,8 @@ class HierarchicalSearcher:
                 return result, division_tree
             if return_modularities:
                 return result, division_modularities
+            if return_sampleset_metadata:
+                return result, samplesets_metadata
             else:
                 return result
         elif max_depth < 1:
@@ -175,7 +177,7 @@ class HierarchicalSearcher:
         # Currently only AdvantageSampler among the hierarchical solvers
         # provides sampleset metadata.
         if isinstance(self.sampler, AdvantageSampler) and self.sampler.return_sampleset_metadata and return_sampleset_metadata:
-            sample, sampleset_full = self.sampler.sample_qubo_to_dict()
+            sample, sampleset_full = self.sampler.sample_qubo_to_dict(return_sampleset_metadata=return_sampleset_metadata)
             samplesets_metadata.append(sampleset_full)
         else:
             sample = self.sampler.sample_qubo_to_dict()

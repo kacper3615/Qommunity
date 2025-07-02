@@ -49,8 +49,11 @@ class AdvantageSampler(HierarchicalSampler):
             elapse_times=elapse_times
         )
 
-    def sample_qubo_to_dict(self) -> dict:
-        sample = self.advantage.solve(return_sampleset_metadata=self.return_sampleset_metadata)
+    def sample_qubo_to_dict(self, return_sampleset_metadata: bool | None = None) -> dict:
+        if return_sampleset_metadata:
+            sample = self.advantage.solve(return_sampleset_metadata=self.return_sampleset_metadata)
+        else:
+            sample = self.advantage.solve()
 
         variables = sorted(
             [col for col in sample.probabilities.dtype.names if col.startswith("x")],
@@ -58,7 +61,11 @@ class AdvantageSampler(HierarchicalSampler):
         )
         community = sample.probabilities[variables][0]
 
-        return dict(zip(variables, community)), sample.sampleset_info
+        result = dict(zip(variables, community))
+
+        if return_sampleset_metadata:
+            return result, sample.sampleset_info
+        return result
 
     def update_community(self, community: list) -> None:
         self.__init__(

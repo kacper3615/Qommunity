@@ -9,10 +9,12 @@ from time import time
 from tqdm import tqdm
 import numpy as np
 import warnings
+import pickle
 
 from Qommunity.samplers.hierarchical.advantage_sampler import AdvantageSampler
 
 SAMPLESET_METADATA_KEYARG = "return_sampleset_metadata"
+
 
 class MethodArgsWarning(Warning):
     def __init__(self, msg):
@@ -56,6 +58,11 @@ class IterativeHierarchicalSearcher:
 
         return kwargs
 
+    def _check_sampler_and_it_searcher_metadata_flags_compatibility(
+        self, return_sampleset_metadata_flag: bool
+    ) -> bool:
+        return self.sampler.return_sampleset_metadata and return_sampleset_metadata_flag
+
     def run(
         self,
         num_runs: int,
@@ -68,6 +75,12 @@ class IterativeHierarchicalSearcher:
     ):
         kwargs = self._verify_kwargs(kwargs)
 
+        if return_sampleset_metadata and not self.sampler.return_sampleset_metadata:
+            raise MethodArgsWarning(
+                "Set Advantage sampler's return_sampleset_metadata flag to True before running."
+                + " HierarchicalIterativeSearcher with return_sampleset_metadata."
+            )
+
         if iterative_verbosity >= 1:
             print("Starting community detection iterations")
 
@@ -77,7 +90,11 @@ class IterativeHierarchicalSearcher:
         modularities = np.zeros((num_runs))
         communities = np.empty((num_runs), dtype=object)
         times = np.zeros((num_runs))
-        samplesets_data = np.empty((num_runs), dtype=object)
+
+        # List instead of samplesets_data = np.empty((num_runs), dtype=object)
+        # To prevent jupyter notebook kernel crashes
+        # as handling big objects is not efficient with numpy dtype=object arrs
+        samplesets_data = []
 
         for iter in tqdm(range(num_runs)):
             elapsed = time()
@@ -107,7 +124,9 @@ class IterativeHierarchicalSearcher:
                 if elapse_times:
                     np.save(f"{saving_path}_times", times)
                 if return_sampleset_metadata:
-                    np.save(f"{saving_path}_sampleset_infos", samplesets_data)
+                    # Pickle saving tends to be safer for big objects
+                    with open(f"{saving_path}_samplesets_data.pkl", "wb") as f:
+                        pickle.dump(samplesets_data, f)
 
             if iterative_verbosity >= 1:
                 print(f"Iteration {iter} completed")
@@ -130,6 +149,12 @@ class IterativeHierarchicalSearcher:
         **kwargs,
     ):
 
+        if return_sampleset_metadata and not self.sampler.return_sampleset_metadata:
+            raise MethodArgsWarning(
+                "Set Advantage sampler's return_sampleset_metadata flag to True before running."
+                + " HierarchicalIterativeSearcher with return_sampleset_metadata."
+            )
+
         if iterative_verbosity >= 1:
             print("Starting community detection iterations")
 
@@ -141,7 +166,10 @@ class IterativeHierarchicalSearcher:
         times = np.zeros((num_runs))
         division_modularities = np.empty((num_runs), dtype=object)
         division_trees = np.empty((num_runs), dtype=object)
-        samplesets_data = np.empty((num_runs), dtype=object)
+        # List instead of samplesets_data = np.empty((num_runs), dtype=object)
+        # To prevent jupyter notebook kernel crashes
+        # as handling big objects is not efficient with numpy dtype=object arrs
+        samplesets_data = []
 
         if return_sampleset_metadata:
             kwargs[SAMPLESET_METADATA_KEYARG] = True
@@ -153,11 +181,14 @@ class IterativeHierarchicalSearcher:
                 division_tree=True,
                 **kwargs,
             )
+
             # Currently only AdvantageSampler among the hierarchical solvers
             # provides sampleset metadata.
-            print(isinstance(self.sampler, AdvantageSampler))
-            print(return_sampleset_metadata)
-            if isinstance(self.sampler, AdvantageSampler) and return_sampleset_metadata:
+            if (
+                isinstance(self.sampler, AdvantageSampler)
+                and self.sampler.return_sampleset_metadata
+                and return_sampleset_metadata
+            ):
                 (
                     communities_result,
                     div_tree,
@@ -173,7 +204,10 @@ class IterativeHierarchicalSearcher:
             times[iter] = time() - elapsed
             division_trees[iter] = div_tree
             division_modularities[iter] = div_modularities
-            samplesets_data[iter] = sampleset_data
+            if return_sampleset_metadata:
+                # Pickle saving tends to be safer for big objects
+                # and np.save does not support dtype=object
+                samplesets_data.append(sampleset_data)
 
             try:
                 modularity_score = nx.community.modularity(
@@ -197,7 +231,10 @@ class IterativeHierarchicalSearcher:
                     f"{saving_path}_division_modularities",
                     division_modularities,
                 )
-                np.save(f"{saving_path}_samplesets_data", samplesets_data)
+                # Pickle saving tends to be safer for big objects
+                if return_sampleset_metadata:
+                    with open(f"{saving_path}_samplesets_data.pkl", "wb") as f:
+                        pickle.dump(samplesets_data, f)
 
             if iterative_verbosity >= 1:
                 print(f"Iteration {iter} completed")
@@ -226,71 +263,4 @@ class IterativeHierarchicalSearcher:
             dtype=dtypes,
         )
 
-        if not return_sampleset_metadata:
-            return sampleset
-
-        results_processed = self._process_results(sampleset)
-
-        return results_processed
-
-    def _process_results(self, sampleset):
-        dtype = [si.dwave_sampleset_metadata for si in sampleset[0].samplesets_data][
-            0
-        ].dtype.descr
-        dwave_sampleset_metadata = np.array(
-            [
-                np.concatenate(
-                    [
-                        np.array([r], dtype=dtype)
-                        for r in [
-                            si.dwave_sampleset_info
-                            for si in sampleset[run].samplesets_data
-                        ]
-                    ]
-                ).view(np.recarray)
-                for run in range(len(sampleset))
-            ],
-            dtype=object,
-        )
-
-        dtype = [si.time_measurements for si in sampleset[0].samplesets_data][
-            0
-        ].dtype.descr
-        time_measurements = np.array(
-            [
-                np.concatenate(
-                    [
-                        np.array([r], dtype=dtype)
-                        for r in [
-                            si.time_measurements
-                            for si in sampleset[run].samplesets_data
-                        ]
-                    ]
-                ).view(np.recarray)
-                for run in range(len(sampleset))
-            ],
-            dtype=object,
-        )
-
-        results_procesed_dtypes = sampleset.dtype.descr
-        results_procesed_dtypes.pop()
-        results_procesed_dtypes.append(("dwave_sampleset_metadata", object))
-        results_procesed_dtypes.append(("time_measurements", object))
-        results_procesed_dtypes
-
-        results_processed_componenets = [
-            sampleset.communities,
-            sampleset.modularity,
-            sampleset.time,
-            sampleset.division_tree,
-            sampleset.division_modularities,
-            dwave_sampleset_metadata,
-            time_measurements,
-        ]
-
-        results_processed = np.rec.fromarrays(
-            results_processed_componenets,
-            dtype=results_procesed_dtypes,
-        )
-
-        return results_processed
+        return sampleset
