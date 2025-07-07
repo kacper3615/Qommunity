@@ -1,5 +1,10 @@
+from dataclasses import dataclass, field
 from Qommunity.samplers.hierarchical.hierarchical_sampler import HierarchicalSampler
+from Qommunity.samplers.hierarchical.advantage_sampler import AdvantageSampler
 import networkx as nx
+import numpy as np
+from enum import Enum
+from QHyper.solvers.base import SamplesetData
 
 
 class HierarchicalSearcher:
@@ -43,21 +48,26 @@ class HierarchicalSearcher:
         max_depth: int | None = None,
         division_tree: bool = False,
         return_modularities: bool = False,
+        return_sampleset_metadata: bool = False,
     ) -> list:
         if verbosity >= 1:
             print("Starting community detection")
 
-        if max_depth == None:
+        if max_depth is None or max_depth > 1:
             if division_tree == False:
                 division_tree = None
             else:
                 division_tree = []
+
+            samplesets_metadata = []
 
             result = self._hierarchical_search_recursion(
                 verbosity=verbosity,
                 level=1,
                 max_depth=max_depth,
                 division_tree=division_tree,
+                samplesets_metadata=samplesets_metadata,
+                return_sampleset_metadata=return_sampleset_metadata,
             )
 
             if division_tree:
@@ -111,13 +121,20 @@ class HierarchicalSearcher:
                     print("Division tree")
                     for division in division_tree:
                         print(division)
+            
+            if len(samplesets_metadata) > 0 and return_sampleset_metadata:
+                samplesets_metadata = HierarchicalRunMetadata(samplesets_metadata)
 
+            if division_tree and return_modularities and return_sampleset_metadata:
+                return result, division_tree, division_modularities, samplesets_metadata
             if division_tree and return_modularities:
                 return result, division_tree, division_modularities
             if division_tree:
                 return result, division_tree
             if return_modularities:
                 return result, division_modularities
+            if return_sampleset_metadata:
+                return result, samplesets_metadata
             else:
                 return result
         elif max_depth < 1:
@@ -133,6 +150,8 @@ class HierarchicalSearcher:
         level: int,
         community: list | None = None,
         division_tree: list | None = None,
+        samplesets_metadata: list | None = None,
+        return_sampleset_metadata: bool = False,
     ):
         if not community:
             community = [*range(self.sampler.G.number_of_nodes())]
@@ -154,7 +173,14 @@ class HierarchicalSearcher:
             print("===========================================")
 
         self.sampler.update_community(community)
-        sample = self.sampler.sample_qubo_to_dict()
+
+        # Currently only AdvantageSampler among the hierarchical solvers
+        # provides sampleset metadata.
+        if isinstance(self.sampler, AdvantageSampler) and self.sampler.return_sampleset_metadata and return_sampleset_metadata:
+            sample, sampleset_full = self.sampler.sample_qubo_to_dict(return_sampleset_metadata=return_sampleset_metadata)
+            samplesets_metadata.append(sampleset_full)
+        else:
+            sample = self.sampler.sample_qubo_to_dict()
 
         c0, c1 = self._split_dict_to_lists(sample, community)
 
@@ -189,12 +215,16 @@ class HierarchicalSearcher:
                     level=level + 1,
                     community=c0,
                     division_tree=division_tree,
+                    samplesets_metadata=samplesets_metadata,
+                    return_sampleset_metadata=return_sampleset_metadata,
                 ) + self._hierarchical_search_recursion(
                     verbosity,
                     max_depth,
                     level=level + 1,
                     community=c1,
                     division_tree=division_tree,
+                    samplesets_metadata=samplesets_metadata,
+                    return_sampleset_metadata=return_sampleset_metadata,
                 )
             elif c0:
                 return [c0]
@@ -218,3 +248,36 @@ class HierarchicalSearcher:
                 result.add(item)
 
         return result
+
+
+class FieldName(Enum):
+    DwaveSamplesetMetadata = "dwave_sampleset_metadata"
+    TimeMeasurements = "time_measurements"
+
+
+@dataclass
+class HierarchicalRunMetadata:
+    dwave_sampleset_metadata: np.recarray = field(init=False)
+    time_measurements: np.recarray = field(init=False)
+
+    def __init__(self, sampleset: list[SamplesetData]):
+        self.dwave_sampleset_metadata = self._process_samples(
+            sampleset, FieldName.DwaveSamplesetMetadata.value
+        )
+        self.time_measurements = self._process_samples(
+            sampleset, FieldName.TimeMeasurements.value
+        )
+
+    def _process_samples(
+        self, sampleset: list[SamplesetData], field_name: str
+    ) -> np.recarray:
+        dtype = [getattr(sampleset[0], field_name)][0].dtype.descr
+        concatenated = np.concatenate(
+            [
+                np.array([division_rec], dtype=dtype)
+                for division_rec in [
+                    getattr(division, field_name) for division in sampleset
+                ]
+            ]
+        ).view(np.recarray)
+        return concatenated
