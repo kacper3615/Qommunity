@@ -2,7 +2,6 @@ from QHyper.solvers.quantum_annealing.dwave.advantage import Advantage
 from QHyper.problems.community_detection import Network, CommunityDetectionProblem
 import networkx as nx
 from ..hierarchical_sampler import HierarchicalSampler
-import numpy as np
 
 
 class AdvantageSampler(HierarchicalSampler):
@@ -18,7 +17,7 @@ class AdvantageSampler(HierarchicalSampler):
         chain_strength: float | None = None,
         use_clique_embedding: bool = False,
         elapse_times: bool = False,
-        return_sampleset_metadata: bool = True,
+        return_metadata: bool = True,
     ) -> None:
         if not community:
             community = [*range(G.number_of_nodes())]
@@ -32,7 +31,7 @@ class AdvantageSampler(HierarchicalSampler):
         self.use_clique_embedding = use_clique_embedding
         self._use_weights = use_weights
         self.elapse_times = elapse_times
-        self.return_sampleset_metadata = return_sampleset_metadata
+        self.return_metadata = return_metadata
 
         weight = "weight" if use_weights else None
         network = Network(G, resolution=resolution, weight=weight, community=community)
@@ -46,12 +45,14 @@ class AdvantageSampler(HierarchicalSampler):
             num_reads=num_reads,
             chain_strength=chain_strength,
             use_clique_embedding=use_clique_embedding,
-            elapse_times=elapse_times
+            elapse_times=elapse_times,
         )
 
-    def sample_qubo_to_dict(self, return_sampleset_metadata: bool | None = None) -> dict:
-        if return_sampleset_metadata:
-            sample = self.advantage.solve(return_sampleset_metadata=self.return_sampleset_metadata)
+    def sample_qubo_to_dict(self, return_metadata: bool | None = None) -> dict:
+        if return_metadata:
+            sample = self.advantage.solve(
+                return_sampleset_metadata=self.return_metadata
+            )
         else:
             sample = self.advantage.solve()
 
@@ -63,7 +64,7 @@ class AdvantageSampler(HierarchicalSampler):
 
         result = dict(zip(variables, community))
 
-        if return_sampleset_metadata:
+        if return_metadata:
             return result, sample.sampleset_info
         return result
 
@@ -79,5 +80,5 @@ class AdvantageSampler(HierarchicalSampler):
             self.chain_strength,
             self.use_clique_embedding,
             self.elapse_times,
-            self.return_sampleset_metadata
+            self.return_metadata,
         )
