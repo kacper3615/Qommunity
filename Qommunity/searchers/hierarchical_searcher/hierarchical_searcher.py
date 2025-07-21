@@ -176,7 +176,7 @@ class HierarchicalSearcher:
         # provides sampleset metadata.
         if (
             isinstance(self.sampler, AdvantageSampler)
-            and self.sampler._return_metadata
+            and self.sampler.return_metadata
             and return_metadata
         ):
             sample, sampleset_full = self.sampler.sample_qubo_to_dict(

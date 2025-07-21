@@ -51,7 +51,7 @@ class AdvantageSampler(HierarchicalSampler):
     def sample_qubo_to_dict(self, return_metadata: bool | None = None) -> dict:
         if return_metadata:
             sample = self.advantage.solve(
-                return_sampleset_metadata=self.return_metadata
+                return_metadata=self.return_metadata
             )
         else:
             sample = self.advantage.solve()
