@@ -1,0 +1,112 @@
+Max modularity N=10 --> 0.204082
+
+Total QPU sampling time:  0.01266 (s)
+Total QPU anneal time per sample  2e-05 (s)
+Total QPU readout time per sample:  8.601999999999999e-05 (s)
+Total QPU access time:  0.028421560000000002(s)
+Total QPU access overhead time:  0.00155544 (s)
+Total QPU programming time:  0.01576156 (s)
+Total QPU delay time per sample:  2.058e-05 (s)
+Total post-processing time:  2.8e-05 (s)
+
+Total cache-and-read embedding time:  0.04859245999250561 (s)
+Total solver communication time:  2.3226501690223813 (s)
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+Max modularity N=20 --> 0.164857
+
+Total QPU sampling time:  0.02002 (s)
+Total QPU anneal time per sample  2e-05 (s)
+Total QPU readout time per sample:  0.00015962 (s)
+Total QPU access time:  0.03578156(s)
+Total QPU access overhead time:  0.00265744 (s)
+Total QPU programming time:  0.01576156 (s)
+Total QPU delay time per sample:  2.058e-05 (s)
+Total post-processing time:  2.2e-05 (s)
+
+Total cache-and-read embedding time:  0.0721344209741801 (s)
+Total solver communication time:  2.5531038059853017 (s)
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+Max modularity N=30 --> 0.156025
+
+Total QPU sampling time:  0.020908 (s)
+Total QPU anneal time per sample  2e-05 (s)
+Total QPU readout time per sample:  0.0001685 (s)
+Total QPU access time:  0.03667316(s)
+Total QPU access overhead time:  0.00144984 (s)
+Total QPU programming time:  0.01576516 (s)
+Total QPU delay time per sample:  2.058e-05 (s)
+Total post-processing time:  1e-06 (s)
+
+Total cache-and-read embedding time:  0.11201598297338933 (s)
+Total solver communication time:  2.146789093967527 (s)
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+Max modularity N=50 --> 0.130288
+
+Total QPU sampling time:  0.013628 (s)
+Total QPU anneal time per sample  2e-05 (s)
+Total QPU readout time per sample:  9.570000000000001e-05 (s)
+Total QPU access time:  0.02939316(s)
+Total QPU access overhead time:  0.00127184 (s)
+Total QPU programming time:  0.01576516 (s)
+Total QPU delay time per sample:  2.058e-05 (s)
+Total post-processing time:  5.4e-05 (s)
+
+Total cache-and-read embedding time:  0.15917218406684697 (s)
+Total solver communication time:  2.2265769289806485 (s)
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+Max modularity N=80 --> 0.106642
+
+Total QPU sampling time:  0.023112 (s)
+Total QPU anneal time per sample  2e-05 (s)
+Total QPU readout time per sample:  0.00019054 (s)
+Total QPU access time:  0.03887636(s)
+Total QPU access overhead time:  0.0011496400000000002 (s)
+Total QPU programming time:  0.01576436 (s)
+Total QPU delay time per sample:  2.058e-05 (s)
+Total post-processing time:  3.6e-05 (s)
+
+Total cache-and-read embedding time:  0.2128874430200085 (s)
+Total solver communication time:  2.4277427039342 (s)
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+Max modularity N=100 --> 0.109726
+
+Total QPU sampling time:  0.024068 (s)
+Total QPU anneal time per sample  2e-05 (s)
+Total QPU readout time per sample:  0.00020009999999999998 (s)
+Total QPU access time:  0.03983876(s)
+Total QPU access overhead time:  0.00119924 (s)
+Total QPU programming time:  0.01577076 (s)
+Total QPU delay time per sample:  2.058e-05 (s)
+Total post-processing time:  0.000111 (s)
+
+Total cache-and-read embedding time:  0.2738896190421656 (s)
+Total solver communication time:  2.4751215699361637 (s)
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+Max modularity N=120 --> 0.094865
+
+Total QPU sampling time:  0.02258 (s)
+Total QPU anneal time per sample  2e-05 (s)
+Total QPU readout time per sample:  0.00018522 (s)
+Total QPU access time:  0.03834836(s)
+Total QPU access overhead time:  0.00110164 (s)
+Total QPU programming time:  0.015768360000000002 (s)
+Total QPU delay time per sample:  2.058e-05 (s)
+Total post-processing time:  4.8e-05 (s)
+
+Total cache-and-read embedding time:  0.2928098529810086 (s)
+Total solver communication time:  2.7180457069771364 (s)
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+Max modularity N=140 --> 0.087357
+
+Total QPU sampling time:  0.024382 (s)
+Total QPU anneal time per sample  2e-05 (s)
+Total QPU readout time per sample:  0.00020324 (s)
+Total QPU access time:  0.04014556(s)
+Total QPU access overhead time:  0.00143944 (s)
+Total QPU programming time:  0.01576356 (s)
+Total QPU delay time per sample:  2.058e-05 (s)
+Total post-processing time:  1.2e-05 (s)
+
+Total cache-and-read embedding time:  0.3488780320622027 (s)
+Total solver communication time:  2.627605304005556 (s)
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
