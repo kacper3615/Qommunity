@@ -1,4 +1,4 @@
-Max modularity N=50 --> 0.079861
+Max modularity N=50 --> [0.5 0.  0. ]
 
 Total QPU sampling time:  0.013628 (s)
 Total QPU anneal time per sample  2e-05 (s)
@@ -12,7 +12,7 @@ Total post-processing time:  1e-06 (s)
 Total cache-and-read embedding time:  0.13196521694771945 (s)
 Total solver communication time:  2.2016090659890324 (s)
 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-Max modularity N=50 --> 0.110189
+Max modularity N=50 --> [0.25 0.   0.  ]
 
 Total QPU sampling time:  0.013628 (s)
 Total QPU anneal time per sample  2e-05 (s)
@@ -26,7 +26,7 @@ Total post-processing time:  1e-06 (s)
 Total cache-and-read embedding time:  0.12527650699485093 (s)
 Total solver communication time:  2.152386065921746 (s)
 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-Max modularity N=50 --> 0.092432
+Max modularity N=50 --> [0.02874 0.      0.     ]
 
 Total QPU sampling time:  0.20242 (s)
 Total QPU anneal time per sample  0.00030000000000000003 (s)
@@ -40,7 +40,7 @@ Total post-processing time:  0.00014899999999999996 (s)
 Total cache-and-read embedding time:  0.6859906499739736 (s)
 Total solver communication time:  11.088630379992537 (s)
 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-Max modularity N=50 --> 0.081621
+Max modularity N=50 --> [0.00074 0.      0.     ]
 
 Total QPU sampling time:  0.33418400000000004 (s)
 Total QPU anneal time per sample  0.0005600000000000002 (s)
@@ -54,7 +54,7 @@ Total post-processing time:  0.00013199999999999996 (s)
 Total cache-and-read embedding time:  1.8753519878955558 (s)
 Total solver communication time:  20.4637657860294 (s)
 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-Max modularity N=80 --> 0.079861
+Max modularity N=80 --> [0.5 0.5 0. ]
 
 Total QPU sampling time:  0.023112 (s)
 Total QPU anneal time per sample  2e-05 (s)
@@ -68,7 +68,7 @@ Total post-processing time:  1e-06 (s)
 Total cache-and-read embedding time:  0.40430103696417063 (s)
 Total solver communication time:  2.4455150479916483 (s)
 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-Max modularity N=80 --> 0.110189
+Max modularity N=80 --> [0.25 0.25 0.  ]
 
 Total QPU sampling time:  0.023112 (s)
 Total QPU anneal time per sample  2e-05 (s)
@@ -82,7 +82,7 @@ Total post-processing time:  1.3e-05 (s)
 Total cache-and-read embedding time:  0.40923199604731053 (s)
 Total solver communication time:  2.5320069160079584 (s)
 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-Max modularity N=80 --> 0.092432
+Max modularity N=80 --> [0.02874  0.027706 0.      ]
 
 Total QPU sampling time:  0.30812 (s)
 Total QPU anneal time per sample  0.0004 (s)
@@ -96,7 +96,7 @@ Total post-processing time:  0.000179 (s)
 Total cache-and-read embedding time:  2.225447485106997 (s)
 Total solver communication time:  11.587489233119413 (s)
 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-Max modularity N=80 --> 0.081621
+Max modularity N=80 --> [0.00074  0.002628 0.      ]
 
 Total QPU sampling time:  0.499392 (s)
 Total QPU anneal time per sample  0.0008200000000000008 (s)
@@ -110,7 +110,7 @@ Total post-processing time:  0.001071 (s)
 Total cache-and-read embedding time:  1.2213133290642872 (s)
 Total solver communication time:  15.788847293937579 (s)
 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-Max modularity N=100 --> 0.079861
+Max modularity N=100 --> [0.5 0.5 0.5]
 
 Total QPU sampling time:  0.024068 (s)
 Total QPU anneal time per sample  2e-05 (s)
@@ -124,7 +124,7 @@ Total post-processing time:  2.6e-05 (s)
 Total cache-and-read embedding time:  0.3137847110629082 (s)
 Total solver communication time:  2.8552297910209745 (s)
 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-Max modularity N=100 --> 0.110189
+Max modularity N=100 --> [0.25 0.25 0.25]
 
 Total QPU sampling time:  0.024068 (s)
 Total QPU anneal time per sample  2e-05 (s)
@@ -138,7 +138,7 @@ Total post-processing time:  1e-06 (s)
 Total cache-and-read embedding time:  0.311218952992931 (s)
 Total solver communication time:  3.0344671399798244 (s)
 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-Max modularity N=100 --> 0.092432
+Max modularity N=100 --> [0.02874  0.027706 0.024896]
 
 Total QPU sampling time:  0.35235999999999995 (s)
 Total QPU anneal time per sample  0.00046 (s)
@@ -152,7 +152,7 @@ Total post-processing time:  0.00031100000000000013 (s)
 Total cache-and-read embedding time:  2.587675353977829 (s)
 Total solver communication time:  16.680657327757217 (s)
 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-Max modularity N=100 --> 0.081621
+Max modularity N=100 --> [0.00074  0.002628 0.002782]
 
 Total QPU sampling time:  0.5956259999999999 (s)
 Total QPU anneal time per sample  0.0009600000000000012 (s)
