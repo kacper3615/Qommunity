@@ -13,7 +13,7 @@ import pickle
 
 from Qommunity.samplers.hierarchical.advantage_sampler import AdvantageSampler
 
-SAMPLESET_METADATA_KEYARG = "return_sampleset_metadata"
+METADATA_KEYARG = "return_metadata"
 
 
 class MethodArgsWarning(Warning):
@@ -59,9 +59,9 @@ class IterativeHierarchicalSearcher:
         return kwargs
 
     def _check_sampler_and_it_searcher_metadata_flags_compatibility(
-        self, return_sampleset_metadata_flag: bool
+        self, return_metadata_flag: bool
     ) -> bool:
-        return self.sampler.return_sampleset_metadata and return_sampleset_metadata_flag
+        return self.sampler.return_metadata and return_metadata_flag
 
     def run(
         self,
@@ -70,15 +70,15 @@ class IterativeHierarchicalSearcher:
         saving_path: str | None = None,
         elapse_times: bool = True,
         iterative_verbosity: int = 0,
-        return_sampleset_metadata: bool = False,
+        return_metadata: bool = False,
         **kwargs,
     ):
         kwargs = self._verify_kwargs(kwargs)
 
-        if return_sampleset_metadata and not self.sampler.return_sampleset_metadata:
+        if return_metadata and not self.sampler.return_metadata:
             raise MethodArgsWarning(
-                "Set Advantage sampler's return_sampleset_metadata flag to True before running."
-                + " HierarchicalIterativeSearcher with return_sampleset_metadata."
+                f"Set Advantage sampler's {METADATA_KEYARG} flag to True before running."
+                + f" HierarchicalIterativeSearcher with {METADATA_KEYARG}."
             )
 
         if iterative_verbosity >= 1:
@@ -101,7 +101,7 @@ class IterativeHierarchicalSearcher:
             result = self.searcher.hierarchical_community_search(**kwargs)
             times[iter] = time() - elapsed
 
-            if SAMPLESET_METADATA_KEYARG in kwargs:
+            if METADATA_KEYARG in kwargs:
                 result, sampleset_metadata = result
 
             try:
@@ -116,14 +116,15 @@ class IterativeHierarchicalSearcher:
 
             communities[iter] = result
             modularities[iter] = modularity_score
-            samplesets_data[iter] = sampleset_metadata
+            if return_metadata:
+                samplesets_data.append(sampleset_metadata)
 
             if save_results:
                 np.save(f"{saving_path}_modularities", modularities)
                 np.save(f"{saving_path}_communities", communities)
                 if elapse_times:
                     np.save(f"{saving_path}_times", times)
-                if return_sampleset_metadata:
+                if return_metadata:
                     # Pickle saving tends to be safer for big objects
                     with open(f"{saving_path}_samplesets_data.pkl", "wb") as f:
                         pickle.dump(samplesets_data, f)
@@ -131,11 +132,11 @@ class IterativeHierarchicalSearcher:
             if iterative_verbosity >= 1:
                 print(f"Iteration {iter} completed")
 
-        if elapse_times and sampleset_metadata:
+        if elapse_times and return_metadata and sampleset_metadata:
             return communities, modularities, times, sampleset_metadata
         if elapse_times:
             return communities, modularities, times
-        if return_sampleset_metadata:
+        if return_metadata:
             return communities, modularities, samplesets_data
         return communities, modularities
 
@@ -145,14 +146,14 @@ class IterativeHierarchicalSearcher:
         save_results: bool = True,
         saving_path: str | None = None,
         iterative_verbosity: int = 0,
-        return_sampleset_metadata: bool = True,
+        return_metadata: bool = True,
         **kwargs,
     ):
 
-        if return_sampleset_metadata and not self.sampler.return_sampleset_metadata:
+        if return_metadata and not self.sampler.return_metadata:
             raise MethodArgsWarning(
-                "Set Advantage sampler's return_sampleset_metadata flag to True before running."
-                + " HierarchicalIterativeSearcher with return_sampleset_metadata."
+                f"Set Advantage sampler's {METADATA_KEYARG} flag to True before running."
+                + f" HierarchicalIterativeSearcher with {METADATA_KEYARG}."
             )
 
         if iterative_verbosity >= 1:
@@ -171,8 +172,8 @@ class IterativeHierarchicalSearcher:
         # as handling big objects is not efficient with numpy dtype=object arrs
         samplesets_data = []
 
-        if return_sampleset_metadata:
-            kwargs[SAMPLESET_METADATA_KEYARG] = True
+        if return_metadata:
+            kwargs[METADATA_KEYARG] = True
 
         for iter in tqdm(range(num_runs)):
             elapsed = time()
@@ -186,8 +187,8 @@ class IterativeHierarchicalSearcher:
             # provides sampleset metadata.
             if (
                 isinstance(self.sampler, AdvantageSampler)
-                and self.sampler.return_sampleset_metadata
-                and return_sampleset_metadata
+                and self.sampler.return_metadata
+                and return_metadata
             ):
                 (
                     communities_result,
@@ -204,7 +205,7 @@ class IterativeHierarchicalSearcher:
             times[iter] = time() - elapsed
             division_trees[iter] = div_tree
             division_modularities[iter] = div_modularities
-            if return_sampleset_metadata:
+            if return_metadata:
                 # Pickle saving tends to be safer for big objects
                 # and np.save does not support dtype=object
                 samplesets_data.append(sampleset_data)
@@ -232,7 +233,7 @@ class IterativeHierarchicalSearcher:
                     division_modularities,
                 )
                 # Pickle saving tends to be safer for big objects
-                if return_sampleset_metadata:
+                if return_metadata:
                     with open(f"{saving_path}_samplesets_data.pkl", "wb") as f:
                         pickle.dump(samplesets_data, f)
 
@@ -254,7 +255,7 @@ class IterativeHierarchicalSearcher:
             division_modularities,
         ]
 
-        if return_sampleset_metadata:
+        if return_metadata:
             dtypes.append(("samplesets_data", object))
             sampleset_components.append(samplesets_data)
 
