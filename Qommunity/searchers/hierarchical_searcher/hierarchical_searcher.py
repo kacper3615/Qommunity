@@ -1,5 +1,8 @@
 from Qommunity.samplers.hierarchical.hierarchical_sampler import HierarchicalSampler
+from Qommunity.samplers.hierarchical.advantage_sampler import AdvantageSampler
 import networkx as nx
+
+from searchers.utils import HierarchicalRunMetadata
 
 
 class HierarchicalSearcher:
@@ -43,21 +46,26 @@ class HierarchicalSearcher:
         max_depth: int | None = None,
         division_tree: bool = False,
         return_modularities: bool = False,
+        return_metadata: bool = False,
     ) -> list:
         if verbosity >= 1:
             print("Starting community detection")
 
-        if max_depth == None:
+        if max_depth is None or max_depth > 1:
             if division_tree == False:
                 division_tree = None
             else:
                 division_tree = []
+
+            samplesets_metadata = []
 
             result = self._hierarchical_search_recursion(
                 verbosity=verbosity,
                 level=1,
                 max_depth=max_depth,
                 division_tree=division_tree,
+                samplesets_metadata=samplesets_metadata,
+                return_metadata=return_metadata,
             )
 
             if division_tree:
@@ -112,12 +120,19 @@ class HierarchicalSearcher:
                     for division in division_tree:
                         print(division)
 
+            if len(samplesets_metadata) > 0 and return_metadata:
+                samplesets_metadata = HierarchicalRunMetadata(samplesets_metadata)
+
+            if division_tree and return_modularities and return_metadata:
+                return result, division_tree, division_modularities, samplesets_metadata
             if division_tree and return_modularities:
                 return result, division_tree, division_modularities
             if division_tree:
                 return result, division_tree
             if return_modularities:
                 return result, division_modularities
+            if return_metadata:
+                return result, samplesets_metadata
             else:
                 return result
         elif max_depth < 1:
@@ -133,6 +148,8 @@ class HierarchicalSearcher:
         level: int,
         community: list | None = None,
         division_tree: list | None = None,
+        samplesets_metadata: list | None = None,
+        return_metadata: bool = False,
     ):
         if not community:
             community = [*range(self.sampler.G.number_of_nodes())]
@@ -154,7 +171,20 @@ class HierarchicalSearcher:
             print("===========================================")
 
         self.sampler.update_community(community)
-        sample = self.sampler.sample_qubo_to_dict()
+
+        # Currently only AdvantageSampler among the hierarchical solvers
+        # provides sampleset metadata.
+        if (
+            isinstance(self.sampler, AdvantageSampler)
+            and self.sampler.return_metadata
+            and return_metadata
+        ):
+            sample, sampleset_full = self.sampler.sample_qubo_to_dict(
+                return_metadata=return_metadata
+            )
+            samplesets_metadata.append(sampleset_full)
+        else:
+            sample = self.sampler.sample_qubo_to_dict()
 
         c0, c1 = self._split_dict_to_lists(sample, community)
 
@@ -189,12 +219,16 @@ class HierarchicalSearcher:
                     level=level + 1,
                     community=c0,
                     division_tree=division_tree,
+                    samplesets_metadata=samplesets_metadata,
+                    return_metadata=return_metadata,
                 ) + self._hierarchical_search_recursion(
                     verbosity,
                     max_depth,
                     level=level + 1,
                     community=c1,
                     division_tree=division_tree,
+                    samplesets_metadata=samplesets_metadata,
+                    return_metadata=return_metadata,
                 )
             elif c0:
                 return [c0]
