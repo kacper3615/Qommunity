@@ -2,7 +2,7 @@ from Qommunity.samplers.hierarchical.hierarchical_sampler import HierarchicalSam
 from Qommunity.samplers.hierarchical.advantage_sampler import AdvantageSampler
 import networkx as nx
 
-from searchers.utils import HierarchicalRunMetadata
+from Qommunity.searchers.utils import HierarchicalRunMetadata
 
 
 class HierarchicalSearcher:
