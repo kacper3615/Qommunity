@@ -137,7 +137,7 @@ class HierarchicalSearcher:
         if not community:
             community = [*range(self.sampler.G.number_of_nodes())]
 
-        if len(community) == 1:
+        if len(community) < 2:
             return [community]
 
         if level == 1 and division_tree == []:
@@ -153,10 +153,14 @@ class HierarchicalSearcher:
             )
             print("===========================================")
 
-        self.sampler.update_community(community)
-        sample = self.sampler.sample_qubo_to_dict()
-
-        c0, c1 = self._split_dict_to_lists(sample, community)
+        try:
+            self.sampler.update_community(community)
+            sample = self.sampler.sample_qubo_to_dict()
+            c0, c1 = self._split_dict_to_lists(sample, community)
+        except Exception as e:
+            if verbosity >= 1:
+                print(f"[WARNING] Skipping community {community} at level {level} due to error: {e}")
+            return [community]
 
         if verbosity >= 2:
             print("Base community:", community, sep="\n")
