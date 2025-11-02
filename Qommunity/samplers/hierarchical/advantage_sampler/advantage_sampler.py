@@ -34,7 +34,13 @@ class AdvantageSampler(HierarchicalSampler):
             self._full_modularity_matrix = Network(
                 G, resolution=resolution, weight=weight, community=community
             ).calculate_full_modularity_matrix()
-        network = Network(G, resolution=resolution, weight=weight, community=community, full_modularity_matrix=self._full_modularity_matrix)
+        network = Network(
+            G,
+            resolution=resolution,
+            weight=weight,
+            community=community,
+            full_modularity_matrix=self._full_modularity_matrix,
+        )
         problem = CommunityDetectionProblem(
             network, communities=2, one_hot_encoding=False
         )

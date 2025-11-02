@@ -159,7 +159,9 @@ class HierarchicalSearcher:
             c0, c1 = self._split_dict_to_lists(sample, community)
         except Exception as e:
             if verbosity >= 1:
-                print(f"[WARNING] Skipping community {community} at level {level} due to error: {e}")
+                print(
+                    f"[WARNING] Skipping community {community} at level {level} due to error: {e}"
+                )
             return [community]
 
         if verbosity >= 2:
