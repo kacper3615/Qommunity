@@ -242,8 +242,8 @@ class IterativeHierarchicalSearcher:
 
         dtypes = [
             ("communities", object),
-            ("modularity", np.float_),
-            ("time", np.float_),
+            ("modularity", np.float64),
+            ("time", np.float64),
             ("division_tree", object),
             ("division_modularities", object),
         ]
