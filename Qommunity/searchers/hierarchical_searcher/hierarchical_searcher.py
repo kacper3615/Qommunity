@@ -47,84 +47,84 @@ class HierarchicalSearcher:
         if verbosity >= 1:
             print("Starting community detection")
 
-        if max_depth == None:
-            if division_tree == False:
-                division_tree = None
-            else:
-                division_tree = []
-
-            result = self._hierarchical_search_recursion(
-                verbosity=verbosity,
-                level=1,
-                max_depth=max_depth,
-                division_tree=division_tree,
-            )
-
-            if division_tree:
-                for i in range(1, len(division_tree)):
-                    # Flatten the list
-                    lower_list_elements = self._flatten_list_to_set(division_tree[i])
-
-                    # Rewrite unincluded communities
-                    for sublist in division_tree[i - 1]:
-                        if not set(sublist).issubset(lower_list_elements):
-                            unique_to_sublist = set(sublist) - lower_list_elements
-                            if unique_to_sublist:
-                                division_tree[i].append(sublist)
-
-                # Check if the two last divisions are the same
-                # - unify the order of nodes within the community lists
-                # and the order of communities within the list of communities
-                def list_of_lists_sorted(list_of_lists: list[list]) -> list[list]:
-                    return sorted([sorted(sublist) for sublist in list_of_lists])
-
-                # Compare if they're the same
-                higher_list_elements = list_of_lists_sorted(division_tree[-2])
-                lower_list_elements = list_of_lists_sorted(division_tree[-1])
-
-                # Remove the last division if it repeats itself
-                if higher_list_elements == lower_list_elements:
-                    division_tree.pop(-1)
-
-            if division_tree and return_modularities:
-                division_modularities = []
-                for division in division_tree:
-                    division_modularity = nx.community.modularity(
-                        G=self.sampler.G,
-                        communities=division,
-                        resolution=self.sampler.resolution,
-                    )
-                    division_modularities.append(division_modularity)
-
-            elif return_modularities:
-                division_modularities = nx.community.modularity(
-                    G=self.sampler.G,
-                    communities=result,
-                    resolution=self.sampler.resolution,
-                )
-
-            if verbosity >= 1:
-                print("Stopping community detection")
-                print("Result: ")
-                print(result)
-                if division_tree:
-                    print("Division tree")
-                    for division in division_tree:
-                        print(division)
-
-            if division_tree and return_modularities:
-                return result, division_tree, division_modularities
-            if division_tree:
-                return result, division_tree
-            if return_modularities:
-                return result, division_modularities
-            else:
-                return result
-        elif max_depth < 1:
-            print("Max depth value must be equal or greater than one!")
+        if max_depth < 1:
+            raise ValueError("Max depth value must be of type: None or int > 1" + f"provided value: {max_depth}")
+            print("Community detection interrupted...")
             return []
 
-        return []
+        if division_tree == False:
+            division_tree = None
+        else:
+            division_tree = []
+
+        result = self._hierarchical_search_recursion(
+            verbosity=verbosity,
+            level=1,
+            max_depth=max_depth,
+            division_tree=division_tree,
+        )
+
+        if division_tree:
+            for i in range(1, len(division_tree)):
+                # Flatten the list
+                lower_list_elements = self._flatten_list_to_set(division_tree[i])
+
+                # Rewrite unincluded communities
+                for sublist in division_tree[i - 1]:
+                    if not set(sublist).issubset(lower_list_elements):
+                        unique_to_sublist = set(sublist) - lower_list_elements
+                        if unique_to_sublist:
+                            division_tree[i].append(sublist)
+
+            # Check if the two last divisions are the same
+            # - unify the order of nodes within the community lists
+            # and the order of communities within the list of communities
+            def list_of_lists_sorted(list_of_lists: list[list]) -> list[list]:
+                return sorted([sorted(sublist) for sublist in list_of_lists])
+
+            # Compare if they're the same
+            higher_list_elements = list_of_lists_sorted(division_tree[-2])
+            lower_list_elements = list_of_lists_sorted(division_tree[-1])
+
+            # Remove the last division if it repeats itself
+            if higher_list_elements == lower_list_elements:
+                division_tree.pop(-1)
+
+        if division_tree and return_modularities:
+            division_modularities = []
+            for division in division_tree:
+                division_modularity = nx.community.modularity(
+                    G=self.sampler.G,
+                    communities=division,
+                    resolution=self.sampler.resolution,
+                )
+                division_modularities.append(division_modularity)
+
+        elif return_modularities:
+            division_modularities = nx.community.modularity(
+                G=self.sampler.G,
+                communities=result,
+                resolution=self.sampler.resolution,
+            )
+
+        if verbosity >= 1:
+            print("Stopping community detection")
+            print("Result: ")
+            print(result)
+            if division_tree:
+                print("Division tree")
+                for division in division_tree:
+                    print(division)
+
+        if division_tree and return_modularities:
+            return result, division_tree, division_modularities
+        if division_tree:
+            return result, division_tree
+        if return_modularities:
+            return result, division_modularities
+        else:
+            return result
+
 
     def _hierarchical_search_recursion(
         self,
