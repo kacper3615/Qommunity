@@ -150,7 +150,7 @@ class IterativeHierarchicalSearcher:
         **kwargs,
     ):
 
-        if return_metadata and not self.sampler.return_metadata:
+        if return_metadata and hasattr(self.sampler, "return_metadata") and not self.sampler.return_metadata:
             raise MethodArgsWarning(
                 f"Set Advantage sampler's {METADATA_KEYARG} flag to True before running."
                 + f" HierarchicalIterativeSearcher with {METADATA_KEYARG}."
@@ -172,8 +172,11 @@ class IterativeHierarchicalSearcher:
         # as handling big objects is not efficient with numpy dtype=object arrs
         samplesets_data = []
 
-        if return_metadata:
+        if return_metadata and isinstance(self.sampler, AdvantageSampler):
             kwargs[METADATA_KEYARG] = True
+        else:
+            return_metadata = False
+            kwargs[METADATA_KEYARG] = False
 
         for iter in tqdm(range(num_runs)):
             elapsed = time()
