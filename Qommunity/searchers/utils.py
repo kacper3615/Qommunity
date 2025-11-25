@@ -87,6 +87,8 @@ from QHyper.solvers.base import SamplesetData
 from dataclasses import dataclass, field
 import numpy as np
 from typing import Union, List, Dict, Any
+import pickle
+import os
 
 
 class MetadataFieldName(Enum):
@@ -95,11 +97,13 @@ class MetadataFieldName(Enum):
     DWaveSampleset = "dwave_sampleset"
     Timing = "timing"
     ProblemID = "problem_id"
+    CommunityHash = "community_hash"
     ChainStrength = "chain_strength"
     ChainBreakFraction = "chain_break_fraction"
     ChainBreakMethod = "chain_break_method"
     Embedding = "embedding"
     Warnings = "warnings"
+    Community = "community"
 
 
 @dataclass
@@ -115,11 +119,13 @@ class HierarchicalRunMetadata:
     dwave_sampleset: List[Dict[str, Any]] = field(init=False)
     timing: List[Dict[str, Any]] = field(init=False)
     problem_id: List[Union[str, int, float]] = field(init=False)
+    community_hash: List[Union[str, int]] = field(init=False)
     chain_strength: List[float] = field(init=False)
     chain_break_fraction: List[float] = field(init=False)
     chain_break_method: List[str] = field(init=False)
     embedding: List[Dict[str, Any]] = field(init=False)
     warnings: List[Dict[str, Any]] = field(init=False)
+    community: List[List[int]] = field(init=False)
 
     def __init__(self, sampleset: List[SamplesetData]):
         self.dwave_sampleset_metadata = self._process_samples(
@@ -137,6 +143,9 @@ class HierarchicalRunMetadata:
         self.problem_id = self._process_samples(
             sampleset, MetadataFieldName.ProblemID.value
         )
+        self.community_hash = self._process_samples(
+            sampleset, MetadataFieldName.CommunityHash.value
+        )
         self.chain_strength = self._process_samples(
             sampleset, MetadataFieldName.ChainStrength.value
         )
@@ -152,6 +161,100 @@ class HierarchicalRunMetadata:
         self.warnings = self._process_samples(
             sampleset, MetadataFieldName.Warnings.value
         )
+        self.community = self._process_samples(
+            sampleset, MetadataFieldName.Community.value
+        )
+
+    def __iter__(self):
+        self.idx = 0
+        return self
+    
+    def __next__(self):
+        if self.idx < self.__len__():
+            result = SamplesetData(
+                dwave_sampleset_metadata=self.dwave_sampleset_metadata[self.idx],
+                time_measurements=self.time_measurements[self.idx],
+                dwave_sampleset=self.dwave_sampleset[self.idx],
+                timing=self.timing[self.idx],
+                problem_id=self.problem_id[self.idx],
+                community_hash=self.community_hash[self.idx],
+                chain_strength=self.chain_strength[self.idx],
+                chain_break_fraction=self.chain_break_fraction[self.idx],
+                chain_break_method=self.chain_break_method[self.idx],
+                embedding=self.embedding[self.idx],
+                warnings=self.warnings[self.idx],
+                community=self.community[self.idx],
+            )
+            self.idx += 1
+            return result
+        else:
+            raise StopIteration
+        
+    def __len__(self):
+        return len(self.community_hash)
+    
+
+    # def __getitem__(self, index):
+    #     if index < 0 or index >= self.__len__():
+    #         raise IndexError("Index out of range")
+    #     return SamplesetData(
+    #         dwave_sampleset_metadata=self.dwave_sampleset_metadata[index],
+    #         time_measurements=self.time_measurements[index],
+    #         dwave_sampleset=self.dwave_sampleset[index],
+    #         timing=self.timing[index],
+    #         problem_id=self.problem_id[index],
+    #         community_hash=self.community_hash[index],
+    #         chain_strength=self.chain_strength[index],
+    #         chain_break_fraction=self.chain_break_fraction[index],
+    #         chain_break_method=self.chain_break_method[index],
+    #         embedding=self.embedding[index],
+    #         warnings=self.warnings[index],
+    #     )
+
+    def __getitem__(self, community_hash: str | int):
+        self_hashes = self.community_hash
+        if community_hash not in self_hashes:
+            raise KeyError(f"Index must be community_hash in this method. Community hash '{community_hash}' not found")
+        index = self_hashes.index(community_hash)
+        if index < 0 or index >= self.__len__():
+            raise IndexError("Index is a community_hash. Index out of range")
+        return SamplesetData(
+            dwave_sampleset_metadata=self.dwave_sampleset_metadata[index],
+            time_measurements=self.time_measurements[index],
+            dwave_sampleset=self.dwave_sampleset[index],
+            timing=self.timing[index],
+            problem_id=self.problem_id[index],
+            community_hash=self.community_hash[index],
+            chain_strength=self.chain_strength[index],
+            chain_break_fraction=self.chain_break_fraction[index],
+            chain_break_method=self.chain_break_method[index],
+            embedding=self.embedding[index],
+            warnings=self.warnings[index],
+            community=self.community[index],
+        ) 
+    
+    def get_with_hash_id(self, community_hash: str | int) -> SamplesetData:
+        self_hashes = self.community_hash
+        if community_hash not in self_hashes:
+            raise KeyError(f"Index must be community_hash in this method. Community hash '{community_hash}' not found")
+        index = self_hashes.index(community_hash)
+        if index < 0 or index >= self.__len__():
+            raise IndexError("Index is a community_hash. Index out of range")
+        return SamplesetData(
+            dwave_sampleset_metadata=self.dwave_sampleset_metadata[index],
+            time_measurements=self.time_measurements[index],
+            dwave_sampleset=self.dwave_sampleset[index],
+            timing=self.timing[index],
+            problem_id=self.problem_id[index],
+            community_hash=self.community_hash[index],
+            chain_strength=self.chain_strength[index],
+            chain_break_fraction=self.chain_break_fraction[index],
+            chain_break_method=self.chain_break_method[index],
+            embedding=self.embedding[index],
+            warnings=self.warnings[index],
+            community=self.community[index],
+        )
+
 
     def _process_samples(
         self, sampleset: List[SamplesetData], field_name: str
@@ -175,3 +278,41 @@ class HierarchicalRunMetadata:
         else:
             # Works for dicts, numbers, strings, lists, etc.
             return [getattr(division, field_name) for division in sampleset]
+        
+
+    def save_to_files(self, base_filename: str) -> None:
+        """
+        Save each metadata field to a separate .npy file.
+        """
+        # Safety check to avoid overwriting existing files
+        headers_file = f"{base_filename}_headers.pkl"
+        if os.path.exists(headers_file):
+            raise FileExistsError(f"File '{headers_file}' already exists. The saving action is not recommended.")
+        for field in MetadataFieldName:
+            data_file = f"{base_filename}_{field.value}.pkl"
+            if os.path.exists(data_file):
+                raise FileExistsError(f"File '{data_file}' already exists. The saving action is not recommended.")        
+        
+        headers = [field.value for field in MetadataFieldName]
+        with open(f"{base_filename}_headers.pkl", "wb") as f:
+            pickle.dump(headers, f)
+        for field in MetadataFieldName:
+            data = getattr(self, field.value)
+            with open(f"{base_filename}_{field.value}.pkl", "wb") as f:
+                pickle.dump(data, f)
+
+    @staticmethod
+    def load_from_files(base_filename: str) -> None:
+        with open(f"{base_filename}_headers.pkl", "rb") as f:
+            headers = pickle.load(f)
+        hierarchical_metadata_new = HierarchicalRunMetadata.__new__(HierarchicalRunMetadata)
+        for field in MetadataFieldName:
+            try:
+                with open(f"{base_filename}_{field.value}.pkl", "rb") as f:
+                    data = pickle.load(f)
+                setattr(hierarchical_metadata_new, field.value, data)
+            except Exception as e:
+                print(f"Could not load {field.value}: {e}")
+                setattr(hierarchical_metadata_new, field.value, None)
+        assert sorted(headers) == sorted([field.value for field in MetadataFieldName])
+        return hierarchical_metadata_new
