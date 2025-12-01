@@ -89,6 +89,8 @@ import numpy as np
 from typing import Union, List, Dict, Any
 import pickle
 import os
+from dimod.sampleset import SampleSet
+import json
 
 
 class MetadataFieldName(Enum):
@@ -301,6 +303,18 @@ class HierarchicalRunMetadata:
             with open(f"{base_filename}_{field.value}.pkl", "wb") as f:
                 pickle.dump(data, f)
 
+        def save_dwave_samplesets_serializables(path: str):
+            dwave_samplesets_serializables = [ds.to_serializable() for ds in self.dwave_sampleset]
+            with open(path, 'wb') as file:
+                pickle.dump(dwave_samplesets_serializables, file, protocol=pickle.HIGHEST_PROTOCOL)
+
+        def save_embeddings_dicts(path: str):
+            with open(path, 'w') as f:
+                json.dump(self.embedding, f, indent=4)
+                
+        save_dwave_samplesets_serializables(f"{base_filename}_{MetadataFieldName.DWaveSampleset.value}.pickle")
+        save_embeddings_dicts(f"{base_filename}_{MetadataFieldName.Embedding.value}_dict.json")
+
     @staticmethod
     def load_from_files(base_filename: str) -> None:
         with open(f"{base_filename}_headers.pkl", "rb") as f:
@@ -315,4 +329,33 @@ class HierarchicalRunMetadata:
                 print(f"Could not load {field.value}: {e}")
                 setattr(hierarchical_metadata_new, field.value, None)
         assert sorted(headers) == sorted([field.value for field in MetadataFieldName])
+
+        with open(f"{base_filename}_{MetadataFieldName.DWaveSampleset.value}.pickle", "rb") as file:
+            data = pickle.load(file)
+        data = [SampleSet.from_serializable(ds) for ds in data]
+        setattr(hierarchical_metadata_new, MetadataFieldName.DWaveSampleset.value, data)
+
+
+        try:
+            with open(f"{base_filename}_{MetadataFieldName.Embedding.value}_dict.json", "rb") as file:
+                data = json.load(file)
+        except Exception as e:
+            data = []
+        setattr(hierarchical_metadata_new, MetadataFieldName.Embedding.value, data)
+        
         return hierarchical_metadata_new
+    
+
+# from dwave.embedding.transforms import EmbeddedStructure, embed_qubo, embed_bqm
+
+# e = EmbeddedStructure(sampler.to_networkx_graph().edges(), emb[0])
+
+# from QHyper.problems.community_detection import CommunityDetectionProblem, Network
+# from QHyper.converter import Converter
+# from dimod import BinaryQuadraticModel
+# from QHyper.solvers.quantum_annealing.dwave.advantage import convert_qubo_keys
+
+# problem = CommunityDetectionProblem(Network(G, community=c), one_hot_encoding=False)
+# qubo = Converter.create_qubo(problem, [])
+# qubo_terms, offset = convert_qubo_keys(qubo)
+# bqm = BinaryQuadraticModel.from_qubo(qubo_terms, offset=offset)

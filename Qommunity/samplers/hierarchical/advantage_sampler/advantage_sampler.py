@@ -11,8 +11,8 @@ class AdvantageSampler(HierarchicalSampler):
         resolution: float = 1,
         community: list | None = None,
         use_weights: bool = True,
-        version: str = "Advantage_system5.4",
-        region: str = "eu-central-1",
+        version: str | None = None,
+        region: str | None = None,
         num_reads: int = 100,
         chain_strength: float | None = None,
         use_clique_embedding: bool = False,
@@ -34,7 +34,18 @@ class AdvantageSampler(HierarchicalSampler):
         self.return_metadata = return_metadata
 
         weight = "weight" if use_weights else None
-        network = Network(G, resolution=resolution, weight=weight, community=community)
+
+        if not hasattr(self, "_full_modularity_matrix"):
+            self._full_modularity_matrix = Network(
+                G, resolution=resolution, weight=weight, community=community
+            ).calculate_full_modularity_matrix()
+        network = Network(
+            G,
+            resolution=resolution,
+            weight=weight,
+            community=community,
+            full_modularity_matrix=self._full_modularity_matrix,
+        )
         problem = CommunityDetectionProblem(
             network, communities=2, one_hot_encoding=False
         )
@@ -48,10 +59,12 @@ class AdvantageSampler(HierarchicalSampler):
             elapse_times=elapse_times,
         )
 
-    def sample_qubo_to_dict(self, return_metadata: bool | None = None) -> dict:
+    def sample_qubo_to_dict(self, return_metadata: bool | None = None, label: str | None = None, saving_path: str | None = None) -> dict:
         if return_metadata:
             sample = self.advantage.solve(
-                return_metadata=self.return_metadata
+                return_metadata=self.return_metadata,
+                label = label,
+                saving_path=saving_path
             )
         else:
             sample = self.advantage.solve()
@@ -82,3 +95,6 @@ class AdvantageSampler(HierarchicalSampler):
             self.elapse_times,
             self.return_metadata,
         )
+        
+    def __str__(self):
+        return self.advantage.version + " " + self.advantage.region

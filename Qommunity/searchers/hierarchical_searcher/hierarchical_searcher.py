@@ -47,6 +47,9 @@ class HierarchicalSearcher:
         division_tree: bool = False,
         return_modularities: bool = False,
         return_metadata: bool = False,
+        saving_path: str | None = None,
+        label: str | None = None,
+        # kwargs**
     ) -> list:
         if verbosity >= 1:
             print("Starting community detection")
@@ -66,6 +69,8 @@ class HierarchicalSearcher:
                 division_tree=division_tree,
                 samplesets_metadata=samplesets_metadata,
                 return_metadata=return_metadata,
+                saving_path=saving_path,
+                label=label
             )
 
             if division_tree:
@@ -150,11 +155,13 @@ class HierarchicalSearcher:
         division_tree: list | None = None,
         samplesets_metadata: list | None = None,
         return_metadata: bool = False,
+        saving_path: str | None = None,
+        label: str | None = None
     ):
         if not community:
             community = [*range(self.sampler.G.number_of_nodes())]
 
-        if len(community) == 1:
+        if len(community) < 2:
             return [community]
 
         if level == 1 and division_tree == []:
@@ -170,24 +177,33 @@ class HierarchicalSearcher:
             )
             print("===========================================")
 
-        self.sampler.update_community(community)
+        try:
+            self.sampler.update_community(community)
 
-        # Currently only AdvantageSampler among the hierarchical solvers
-        # provides sampleset metadata.
-        if (
-            isinstance(self.sampler, AdvantageSampler)
-            and self.sampler.return_metadata
-            and return_metadata
-        ):
-            sample, sampleset_full = self.sampler.sample_qubo_to_dict(
-                return_metadata=return_metadata
-            )
-            samplesets_metadata.append(sampleset_full)
-        else:
-            sample = self.sampler.sample_qubo_to_dict()
+            # Currently only AdvantageSampler among the hierarchical solvers
+            # provides sampleset metadata.
+            if (
+                isinstance(self.sampler, AdvantageSampler)
+                and self.sampler.return_metadata
+                and return_metadata
+            ):
+                sample, sampleset_full = self.sampler.sample_qubo_to_dict(
+                    return_metadata=return_metadata,
+                    saving_path=saving_path,
+                    label = label
+                )
+                samplesets_metadata.append(sampleset_full)
+            else:
+                sample = self.sampler.sample_qubo_to_dict()
 
-        c0, c1 = self._split_dict_to_lists(sample, community)
-
+            c0, c1 = self._split_dict_to_lists(sample, community)
+        except Exception as e:
+            if verbosity >= 1:
+                print(
+                    f"[WARNING] Skipping community {community} at level {level} due to error: {e}"
+                )
+            return [community]
+        
         if verbosity >= 2:
             print("Base community:", community, sep="\n")
             print("Community division:", c0, c1, sep="\n")
@@ -221,6 +237,8 @@ class HierarchicalSearcher:
                     division_tree=division_tree,
                     samplesets_metadata=samplesets_metadata,
                     return_metadata=return_metadata,
+                    saving_path=saving_path,
+                    label=label
                 ) + self._hierarchical_search_recursion(
                     verbosity,
                     max_depth,
@@ -229,6 +247,8 @@ class HierarchicalSearcher:
                     division_tree=division_tree,
                     samplesets_metadata=samplesets_metadata,
                     return_metadata=return_metadata,
+                    saving_path=saving_path,
+                    label=label
                 )
             elif c0:
                 return [c0]

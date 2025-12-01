@@ -12,6 +12,7 @@ import warnings
 import pickle
 
 from Qommunity.samplers.hierarchical.advantage_sampler import AdvantageSampler
+from Qommunity.searchers.utils import HierarchicalRunMetadata
 
 METADATA_KEYARG = "return_metadata"
 
@@ -167,10 +168,11 @@ class IterativeHierarchicalSearcher:
         times = np.zeros((num_runs))
         division_modularities = np.empty((num_runs), dtype=object)
         division_trees = np.empty((num_runs), dtype=object)
+        samplesets_data = np.empty((num_runs), dtype=object)
         # List instead of samplesets_data = np.empty((num_runs), dtype=object)
         # To prevent jupyter notebook kernel crashes
         # as handling big objects is not efficient with numpy dtype=object arrs
-        samplesets_data = []
+        # samplesets_data = []
 
         if return_metadata and isinstance(self.sampler, AdvantageSampler):
             kwargs[METADATA_KEYARG] = True
@@ -179,10 +181,13 @@ class IterativeHierarchicalSearcher:
             kwargs[METADATA_KEYARG] = False
 
         for iter in tqdm(range(num_runs)):
+            run_label = f"{iter}"
             elapsed = time()
             result = self.searcher.hierarchical_community_search(
                 return_modularities=True,
                 division_tree=True,
+                saving_path=saving_path,
+                label=run_label,
                 **kwargs,
             )
 
@@ -211,7 +216,8 @@ class IterativeHierarchicalSearcher:
             if return_metadata:
                 # Pickle saving tends to be safer for big objects
                 # and np.save does not support dtype=object
-                samplesets_data.append(sampleset_data)
+                # samplesets_data.append(sampleset_data)
+                samplesets_data[iter] = sampleset_data
 
             try:
                 modularity_score = nx.community.modularity(
@@ -226,6 +232,17 @@ class IterativeHierarchicalSearcher:
             communities[iter] = communities_result
             modularities[iter] = modularity_score
 
+            # modularities[iter] = np.load(f"{saving_path}_modularities.npy", allow_pickle=True)
+            # communities[iter] = np.load(f"{saving_path}_communities.npy", allow_pickle=True)
+            # times[iter] = np.load(f"{saving_path}_times.npy", allow_pickle=True)
+            # division_trees[iter] = np.load(f"{saving_path}_division_trees.npy", allow_pickle=True)
+            # division_modularities[iter] = np.load(
+            #         f"{saving_path}_division_modularities.npy",
+            #         allow_pickle=True
+            #     )
+            # hier = HierarchicalRunMetadata.load_from_files(base_filename=f"{saving_path}_{run_label}")
+            # samplesets_data.append(hier)
+
             if save_results:
                 np.save(f"{saving_path}_modularities", modularities)
                 np.save(f"{saving_path}_communities", communities)
@@ -237,8 +254,14 @@ class IterativeHierarchicalSearcher:
                 )
                 # Pickle saving tends to be safer for big objects
                 if return_metadata:
-                    with open(f"{saving_path}_samplesets_data.pkl", "wb") as f:
-                        pickle.dump(samplesets_data, f)
+                    # with open(f"{saving_path}_samplesets_data.pkl", "wb") as f:
+                    #     pickle.dump(samplesets_data, f)
+    
+                    try:
+                        sampleset_data.save_to_files(base_filename=f"{saving_path}_{run_label}")
+                    except Exception as e:
+                        print(f"Error while saving HierarchicalRunMetadata (sampleset_data) from iteration: {iter}", e)
+                    
 
             if iterative_verbosity >= 1:
                 print(f"Iteration {iter} completed")
@@ -261,7 +284,7 @@ class IterativeHierarchicalSearcher:
         if return_metadata:
             dtypes.append(("samplesets_data", object))
             sampleset_components.append(samplesets_data)
-
+            
         sampleset = np.rec.fromarrays(
             sampleset_components,
             dtype=dtypes,
