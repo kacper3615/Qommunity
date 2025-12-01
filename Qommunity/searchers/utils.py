@@ -336,11 +336,11 @@ class HierarchicalRunMetadata:
         setattr(hierarchical_metadata_new, MetadataFieldName.DWaveSampleset.value, data)
 
 
-        try:
-            with open(f"{base_filename}_{MetadataFieldName.Embedding.value}_dict.json", "rb") as file:
-                data = json.load(file)
-        except Exception as e:
-            data = []
+        # try:
+        with open(f"{base_filename}_{MetadataFieldName.Embedding.value}_dict.json", "rb") as file:
+            data = json.load(file)
+        # except Exception as e:
+        #     data = []
         setattr(hierarchical_metadata_new, MetadataFieldName.Embedding.value, data)
         
         return hierarchical_metadata_new
