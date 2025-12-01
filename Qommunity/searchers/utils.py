@@ -1,87 +1,3 @@
-# from enum import Enum
-# from QHyper.solvers.base import SamplesetData
-# from dataclasses import dataclass, field
-# import numpy as np
-
-
-# class MetadataFieldName(Enum):
-#     DwaveSamplesetMetadata = "dwave_sampleset_metadata"
-#     TimeMeasurements = "time_measurements"
-#     DWaveSampleset = "dwave_sampleset"
-#     Timing = "timing"
-#     ProblemID = "problem_id"
-#     ChainStrength = "chain_strength"
-#     ChainBreakFraction = "chain_break_fraction"
-#     ChainBreakMethod = "chain_break_method"
-#     Embedding = "embedding"
-#     Warnings = "warnings"
-
-
-# @dataclass
-# class ChainsData:
-#     chain_strenght: float = field(default=None)
-#     chain_break_fraction: float = field(default=None)
-
-
-# @dataclass
-# class HierarchicalRunMetadata:
-#     dwave_sampleset_metadata: np.recarray = field(init=False)
-#     time_measurements: np.recarray = field(init=False)
-#     dwave_sampleset: dict = field(init=False)
-#     timing: dict = field(init=False)
-#     problem_id: str | int | float = field(init=False)
-#     chain_strength: float = field(init=False)
-#     chain_break_fraction: float = field(init=False)
-#     chain_break_method: str = field(init=False)
-#     embedding: dict = field(init=False)
-#     warnings: dict = field(init=False)
-
-#     def __init__(self, sampleset: list[SamplesetData]):
-#         self.dwave_sampleset_metadata = self._process_samples(
-#             sampleset, MetadataFieldName.DwaveSamplesetMetadata.value
-#         )
-#         self.time_measurements = self._process_samples(
-#             sampleset, MetadataFieldName.TimeMeasurements.value
-#         )
-#         self.dwave_sampleset = self._process_samples(
-#             sampleset, MetadataFieldName.DWaveSampleset.value
-#         )
-#         self.timing = self._process_samples(
-#             sampleset, MetadataFieldName.Timing.value
-#         )
-#         self.problem_id = self._process_samples(
-#             sampleset, MetadataFieldName.ProblemID.value
-#         )
-#         self.chain_strength = self._process_samples(
-#             sampleset, MetadataFieldName.ChainStrength.value
-#         )
-#         self.chain_break_fraction = self._process_samples(
-#             sampleset, MetadataFieldName.ChainBreakFraction.value
-#         )
-#         self.chain_break_method = self._process_samples(
-#             sampleset, MetadataFieldName.ChainBreakMethod.value
-#         )
-#         self.embedding = self._process_samples(
-#             sampleset, MetadataFieldName.Embedding.value
-#         )
-#         self.warnings = self._process_samples(
-#             sampleset, MetadataFieldName.Warnings.value
-#         )
-
-#     def _process_samples(
-#         self, sampleset: list[SamplesetData], field_name: str
-#     ) -> np.recarray:
-#         dtype = [getattr(sampleset[0], field_name)][0].dtype.descr
-#         concatenated = np.concatenate(
-#             [
-#                 np.array([division_rec], dtype=dtype)
-#                 for division_rec in [
-#                     getattr(division, field_name) for division in sampleset
-#                 ]
-#             ]
-#         ).view(np.recarray)
-#         return concatenated
-
 from enum import Enum
 from QHyper.solvers.base import SamplesetData
 from dataclasses import dataclass, field
@@ -233,7 +149,7 @@ class HierarchicalRunMetadata:
             embedding=self.embedding[index],
             warnings=self.warnings[index],
             community=self.community[index],
-        ) 
+        )
     
     def get_with_hash_id(self, community_hash: str | int) -> SamplesetData:
         self_hashes = self.community_hash
@@ -344,18 +260,3 @@ class HierarchicalRunMetadata:
         setattr(hierarchical_metadata_new, MetadataFieldName.Embedding.value, data)
         
         return hierarchical_metadata_new
-    
-
-# from dwave.embedding.transforms import EmbeddedStructure, embed_qubo, embed_bqm
-
-# e = EmbeddedStructure(sampler.to_networkx_graph().edges(), emb[0])
-
-# from QHyper.problems.community_detection import CommunityDetectionProblem, Network
-# from QHyper.converter import Converter
-# from dimod import BinaryQuadraticModel
-# from QHyper.solvers.quantum_annealing.dwave.advantage import convert_qubo_keys
-
-# problem = CommunityDetectionProblem(Network(G, community=c), one_hot_encoding=False)
-# qubo = Converter.create_qubo(problem, [])
-# qubo_terms, offset = convert_qubo_keys(qubo)
-# bqm = BinaryQuadraticModel.from_qubo(qubo_terms, offset=offset)

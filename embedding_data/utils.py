@@ -28,7 +28,7 @@ class Tree:
         self.nodes = [root]
 
 
-def recover_ordering(division_tree):
+def recover_ordering(G, division_tree):
     root = Node(id=hash(tuple(G.nodes)), values=list(G.nodes), left=None, right=None, parent=None)
     nodes = {}
 
@@ -353,7 +353,7 @@ import matplotlib.colors as mcolors
 
 
 
-def build_graph_extended(G, node, level=0):
+def build_graph_extended(G, division_modularities, node, level=0):
     """Recursively traverse the binary tree and add edges."""
 
     if node is None:
@@ -381,10 +381,10 @@ def build_graph_extended(G, node, level=0):
 
     if node.left:
         G.add_edge(node.id, node.left.id)
-        build_graph_extended(G, node.left, level + 1)
+        build_graph_extended(G, division_modularities, node.left, level + 1)
     if node.right:
         G.add_edge(node.id, node.right.id)
-        build_graph_extended(G, node.right, level + 1)
+        build_graph_extended(G, division_modularities, node.right, level + 1)
 
 
 import matplotlib.pyplot as plt
@@ -408,10 +408,10 @@ def center_parents(G, pos):
     return pos
 
 
-def plot_tree_extended(root, figsize=(14,8), cmap=plt.cm.viridis, value=None):
+def plot_tree_extended(root, division_modularities, figsize=(14,8), cmap=plt.cm.viridis, value=None):
     """Create and visualize the binary tree graph with a modern aesthetic."""
     G = nx.DiGraph()
-    build_graph_extended(G, root)
+    build_graph_extended(G, division_modularities, root)
     pos = nx.nx_agraph.graphviz_layout(G, prog="dot")
 
     center_parents(G, pos)
