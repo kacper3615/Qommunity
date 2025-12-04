@@ -7,13 +7,14 @@ from ...utils import communities_to_dict, from_networkx_to_graphtool
 
 
 class SBMSampler(RegularSampler):
-    def __init__(self, G: nx.Graph, state_model=gt.inference.BlockState, state_args={"deg_corr": True, "entropy_args": {"degree_dl_kind": "distributed"}}):
+    def __init__(self, G: nx.Graph, state_model=gt.inference.BlockState, state_args={"deg_corr": True, "entropy_args": {"degree_dl_kind": "distributed"}}, epropweight=True):
         self.G = G
         self.communities_number = None
         self.resolution = 1 # For compatibility 
 
         self.state_model = state_model
         self.state_args = state_args
+        self.epropweight = epropweight
 
     def sample_qubo_to_dict(self) -> dict:
         communities = self.__SBMblocks()
@@ -29,7 +30,8 @@ class SBMSampler(RegularSampler):
 
     def __SBMblocks(self):
         gtG, eprop_weight = from_networkx_to_graphtool(self.G)
-        self.state_args["eweight"] = eprop_weight
+        if self.epropweight:
+            self.state_args["eweight"] = eprop_weight
     
         state = gt.inference.minimize_blockmodel_dl(gtG, self.state_model, state_args=self.state_args)
         
