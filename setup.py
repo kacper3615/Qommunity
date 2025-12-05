@@ -18,6 +18,7 @@ setup(
         "networkx==3.3",
         "pytest==8.2.2",
         "python_igraph==0.11.6",
+        "simanneal==0.5.0",
         "powerlaw",
         "QHyper==0.3.3",
     ],
