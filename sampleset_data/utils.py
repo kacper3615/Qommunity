@@ -272,7 +272,7 @@ def center_parents(G, pos):
     return pos
 
 
-def plot_tree_info(root, division_modularities, figsize=(14,8), cmap=plt.cm.viridis, value=None):
+def plot_tree_extended(root, division_modularities, figsize=(14,8), cmap=plt.cm.viridis, value=None):
     """Create and visualize the binary tree graph with a modern aesthetic."""
     G = nx.DiGraph()
     build_graph_extended(G, division_modularities, root)
