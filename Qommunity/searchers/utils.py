@@ -242,7 +242,6 @@ class HierarchicalRunMetadata:
                     data = pickle.load(f)
                 setattr(hierarchical_metadata_new, field.value, data)
             except Exception as e:
-                print(f"Could not load {field.value}: {e}")
                 setattr(hierarchical_metadata_new, field.value, None)
         assert sorted(headers) == sorted([field.value for field in MetadataFieldName])
 
@@ -250,7 +249,6 @@ class HierarchicalRunMetadata:
             data = pickle.load(file)
         data = [SampleSet.from_serializable(ds) for ds in data]
         setattr(hierarchical_metadata_new, MetadataFieldName.DWaveSampleset.value, data)
-        print(f"DWave sampleset info loaded.")
 
 
         # try:
@@ -259,6 +257,5 @@ class HierarchicalRunMetadata:
         # except Exception as e:
         #     data = []
         setattr(hierarchical_metadata_new, MetadataFieldName.Embedding.value, data)
-        print(f"Embeddings info loaded")
         
         return hierarchical_metadata_new

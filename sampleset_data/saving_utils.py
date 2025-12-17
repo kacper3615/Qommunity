@@ -74,17 +74,17 @@ def save_response_with_solver(response, filename):
                 data[name] = str(value)
     
     # save to JSON
-    with open(filename, "w") as f:
-        json.dump(data, f, indent=2)
-    
-    print(f"Saved {len(data)} public fields of response (including solver) to {filename}")
-
+    try:
+        with open(filename, "w") as f:
+            json.dump(data, f, indent=2)
+    except Exception as e:
+        print(f"Error saving response to {filename}: {e}")
 
 
 import json
 import datetime
 from types import SimpleNamespace
-import dimod  # jeśli masz SampleSet w JSON
+import dimod
 
 def parse_response_json(filename):
     """
@@ -151,10 +151,11 @@ def serialize_qubo_problem(problem_dict, filename):
     # params: leave as is
     # label, undirected_biases: leave as is
     
-    with open(filename, "w") as f:
-        json.dump(serializable, f, indent=2)
-    
-    print(f"QUBO problem saved to {filename}")
+    try:
+        with open(filename, "w") as f:
+            json.dump(serializable, f, indent=2)
+    except Exception as e:
+        print(f"Error saving QUBO problem to {filename}: {e}")
 
 
 import json
