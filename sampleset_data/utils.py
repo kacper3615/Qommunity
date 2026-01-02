@@ -281,13 +281,16 @@ def plot_tree_extended(root, division_modularities, figsize=(14,8), cmap=plt.cm.
     center_parents(G, pos)
 
     # Node classification
-    leaves = [n for n in G.nodes() if G.out_degree(n) == 0]
+    leafs = [n for n in G.nodes() if G.out_degree(n) == 0]
     internals = [n for n in G.nodes() if G.out_degree(n) > 0]
+    cbf_occured = [n for n in G.nodes() if G.nodes[n]['chain_break_fraction'] is not None and G.nodes[n]['chain_break_fraction'] > 0.0]
+    cbf_zero = list(set([n for n in G.nodes()]) - set(cbf_occured))
     labels = nx.get_node_attributes(G, 'label')
 
     # Modern color scheme
     internal_color = "#b8d3e9"
     leaf_color = "#f2a7a7"
+    cbf_occurred_color = "#CE6060"
 
     # plt.figure(figsize=figsize)
     fig, ax = plt.subplots(figsize=figsize)
@@ -295,7 +298,7 @@ def plot_tree_extended(root, division_modularities, figsize=(14,8), cmap=plt.cm.
 
     # Draw nodes
     nx.draw_networkx_nodes(G, pos,
-                           nodelist=internals,
+                           nodelist=cbf_zero, # internals
                            node_color=internal_color,
                            node_size=2800,
                            ax=ax,
@@ -303,8 +306,8 @@ def plot_tree_extended(root, division_modularities, figsize=(14,8), cmap=plt.cm.
                            linewidths=0.8)
 
     nx.draw_networkx_nodes(G, pos,
-                           nodelist=leaves,
-                           node_color=leaf_color,
+                           nodelist=cbf_occured, # leafs
+                           node_color=cbf_occurred_color, # leaf_color,
                            node_size=2800,
                            ax=ax,
                            edgecolors="#2b3a42",
@@ -324,8 +327,8 @@ def plot_tree_extended(root, division_modularities, figsize=(14,8), cmap=plt.cm.
     values = [G.nodes[n]['chain_strength'] for n in G.nodes()]
     valid_values = [v for v in values if v is not None]
     norm = mcolors.Normalize(vmin=min(valid_values), vmax=max(valid_values))
-    # none_color = "#d3d3d3"
-    none_color = "#CE6060"
+    none_color = "#d3d3d3"
+    # none_color = "#CE6060"
     colors = {v: mcolors.to_hex(cmap(norm(v))) if v is not None else none_color for v in values}
 
     import math
@@ -379,7 +382,7 @@ def plot_tree_extended(root, division_modularities, figsize=(14,8), cmap=plt.cm.
         # label = f"{len(values)}\n{mod_value:.2f}"
         # text_color = "white" if node in leaves else "#1e2a36"
         # text_color = "white"
-        font_weight = "bold" if node in leaves else "semibold"
+        font_weight = "bold" if node in leafs else "semibold"
         # label1 = str(len(values))
         # label2 = f"{mod_value:.2f}"
         label1 = f"Pr.size: {len(values)}"
@@ -399,7 +402,7 @@ def plot_tree_extended(root, division_modularities, figsize=(14,8), cmap=plt.cm.
                  fontweight=font_weight,
                  wrap=True,
                  bbox=dict(facecolor=color,
-                           boxstyle="round,pad=0.4",
+                           boxstyle="round,pad=0.15",
                            edgecolor="#e6e6e6",
                            lw=0.8,
                            alpha=0.85)
@@ -425,9 +428,13 @@ def plot_tree_extended(root, division_modularities, figsize=(14,8), cmap=plt.cm.
                       xmin=(xmax+dx) - (xmax+dx), xmax=xmax+dx/2,
                       colors="#bbbbbb", linestyles="dashed", lw=0.8, alpha=0.6)
             
+    # legend_elements = [
+    #     Patch(facecolor=internal_color, edgecolor="#2b3a42", label="Internal nodes"),
+    #     Patch(facecolor=leaf_color, edgecolor="#2b3a42", label="Leaf nodes"),
+    # ]
     legend_elements = [
-        Patch(facecolor=internal_color, edgecolor="#2b3a42", label="Internal nodes"),
-        Patch(facecolor=leaf_color, edgecolor="#2b3a42", label="Leaf nodes"),
+        Patch(facecolor=internal_color, edgecolor="#2b3a42", label="CBF = 0.0"),
+        Patch(facecolor=cbf_occurred_color, edgecolor="#2b3a42", label="CBF > 0.0"),
     ]
 
     plt.legend(handles=legend_elements,

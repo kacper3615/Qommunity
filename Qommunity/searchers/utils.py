@@ -150,6 +150,28 @@ class HierarchicalRunMetadata:
             warnings=self.warnings[index],
             community=self.community[index],
         )
+
+    # def __getitem__(self, pr_id: str | int):
+    #     if pr_id not in self.problem_id:
+    #         raise KeyError(f"Index must be a unique problem_id in this method. Problem ID '{pr_id}' not found")
+    #     index = self.problem_id.index(pr_id)
+    #     if index < 0 or index >= self.__len__():
+    #         raise IndexError("Index is a problem_id. Index out of range")
+    #     return SamplesetData(
+    #         dwave_sampleset_metadata=self.dwave_sampleset_metadata[index],
+    #         time_measurements=self.time_measurements[index],
+    #         dwave_sampleset=self.dwave_sampleset[index],
+    #         timing=self.timing[index],
+    #         problem_id=self.problem_id[index],
+    #         community_hash=self.community_hash[index],
+    #         chain_strength=self.chain_strength[index],
+    #         chain_break_fraction=self.chain_break_fraction[index],
+    #         chain_break_method=self.chain_break_method[index],
+    #         embedding=self.embedding[index],
+    #         warnings=self.warnings[index],
+    #         community=self.community[index],
+    #     )
+
     
     def get_with_hash_id(self, community_hash: str | int) -> SamplesetData:
         self_hashes = self.community_hash
