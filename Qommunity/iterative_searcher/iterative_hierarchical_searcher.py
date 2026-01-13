@@ -14,6 +14,8 @@ import pickle
 from Qommunity.samplers.hierarchical.advantage_sampler import AdvantageSampler
 from Qommunity.searchers.utils import HierarchicalRunMetadata
 
+from joblib import Parallel, delayed
+
 METADATA_KEYARG = "return_metadata"
 
 
@@ -140,6 +142,83 @@ class IterativeHierarchicalSearcher:
         if return_metadata:
             return communities, modularities, samplesets_data
         return communities, modularities
+        
+    import numpy as np
+    import networkx as nx
+    from time import time
+    from tqdm import tqdm
+    from joblib import Parallel, delayed
+
+    # Opcjonalne: zwiększa możliwości serializacji skomplikowanych obiektów
+    try:
+        import dill
+        from joblib.externals.loky import set_loky_pickler
+        set_loky_pickler('dill')
+    except ImportError:
+        pass
+
+    def _single_iteration_worker(
+        self,
+        iter_idx, 
+        searcher, 
+        sampler, 
+        saving_path, 
+        save_results, 
+        return_metadata, 
+        kwargs
+    ):
+        """
+        Funkcja pomocnicza wykonująca pojedynczy przebieg w osobnym procesie.
+        """
+        run_label = f"iter_{iter_idx}"
+        start_time = time()
+        
+        # 1. Wywołanie wyszukiwania
+        # Uwaga: searcher musi być serializowalny przez pickle/dill
+        result = searcher.hierarchical_community_search(
+            return_modularities=True,
+            division_tree=True,
+            saving_path=saving_path,
+            label=run_label,
+            **kwargs,
+        )
+
+        # 2. Obsługa wyników zależnie od metadanych
+        sampleset_data_single = None
+        if return_metadata:
+            communities_res, div_tree, div_mods, sampleset_data_single = result
+        else:
+            communities_res, div_tree, div_mods = result
+
+        elapsed = time() - start_time
+
+        # 3. Obliczenie modularności końcowej
+        try:
+            modularity_score = nx.community.modularity(
+                sampler.G,
+                communities_res,
+                resolution=sampler.resolution,
+            )
+        except Exception as e:
+            modularity_score = -1
+
+        # 4. Zapisywanie metadanych dla tej konkretnej iteracji (jeśli dotyczy)
+        if save_results and return_metadata and sampleset_data_single is not None:
+            try:
+                sampleset_data_single.save_to_files(base_filename=f"{saving_path}_{run_label}")
+            except Exception as e:
+                print(f"\n[Error] Iteration {iter_idx} saving error: {e}")
+
+        return {
+            "communities": communities_res,
+            "modularity": modularity_score,
+            "time": elapsed,
+            "division_tree": div_tree,
+            "division_modularities": div_mods,
+            "sampleset_data": sampleset_data_single
+        }
+
+    # --- Fragment wewnątrz Twojej klasy ---
 
     def run_with_sampleset_info(
         self,
@@ -148,104 +227,54 @@ class IterativeHierarchicalSearcher:
         saving_path: str | None = None,
         iterative_verbosity: int = 0,
         return_metadata: bool = True,
+        n_jobs: int = -1,  # -1 wykorzystuje wszystkie procesory
         **kwargs,
     ):
-
+        # Sprawdzenie wymagań samplera
         if return_metadata and hasattr(self.sampler, "return_metadata") and not self.sampler.return_metadata:
-            raise MethodArgsWarning(
-                f"Set Advantage sampler's {METADATA_KEYARG} flag to True before running."
-                + f" HierarchicalIterativeSearcher with {METADATA_KEYARG}."
-            )
+            print("Warning: Metadata requested but sampler.return_metadata is False.")
 
         if iterative_verbosity >= 1:
-            print("Starting community detection iterations")
+            print(f"Starting parallel community detection: {num_runs} runs on {n_jobs} cores.")
 
         if save_results and saving_path is None:
             saving_path = self._default_saving_path()
-
-        modularities = np.zeros((num_runs))
-        communities = np.empty((num_runs), dtype=object)
-        times = np.zeros((num_runs))
-        division_modularities = np.empty((num_runs), dtype=object)
-        division_trees = np.empty((num_runs), dtype=object)
-        samplesets_data = np.empty((num_runs), dtype=object)
-
+        
         if return_metadata and isinstance(self.sampler, AdvantageSampler):
             kwargs[METADATA_KEYARG] = True
         else:
             return_metadata = False
             kwargs[METADATA_KEYARG] = False
 
-        for iter in tqdm(range(num_runs)):
-            run_label = f"iter_{iter}"
-            
-            elapsed = time()
-            result = self.searcher.hierarchical_community_search(
-                return_modularities=True,
-                division_tree=True,
-                saving_path=saving_path,
-                label=run_label,
-                **kwargs,
-            )
+        # --- RÓWNOLEGŁA PĘTLA Z TQDM ---
+        # backend="loky" jest domyślny i najbezpieczniejszy dla NumPy
+        results = Parallel(n_jobs=n_jobs, backend="threading")(
+            delayed(self._single_iteration_worker)(
+                i, 
+                self.searcher, 
+                self.sampler, 
+                saving_path, 
+                save_results, 
+                return_metadata, 
+                kwargs
+            ) for i in tqdm(range(num_runs))
+        )
 
-            # Currently only AdvantageSampler among the hierarchical solvers
-            # provides sampleset metadata.
-            if (
-                isinstance(self.sampler, AdvantageSampler)
-                and self.sampler.return_metadata
-                and return_metadata
-            ):
-                (
-                    communities_result,
-                    div_tree,
-                    div_modularities,
-                    sampleset_data,
-                ) = result
-            else:
-                (
-                    communities_result,
-                    div_tree,
-                    div_modularities,
-                ) = result
-            times[iter] = time() - elapsed
-            division_trees[iter] = div_tree
-            division_modularities[iter] = div_modularities
-            if return_metadata:
-                samplesets_data[iter] = sampleset_data
+        # --- REDUKCJA WYNIKÓW (Zbieranie danych z procesów) ---
+        communities = np.array([r["communities"] for r in results], dtype=object)
+        modularities = np.array([r["modularity"] for r in results], dtype=np.float64)
+        times = np.array([r["time"] for r in results], dtype=np.float64)
+        division_trees = np.array([r["division_tree"] for r in results], dtype=object)
+        division_modularities = np.array([r["division_modularities"] for r in results], dtype=object)
 
-            try:
-                modularity_score = nx.community.modularity(
-                    self.searcher.sampler.G,
-                    communities_result,
-                    resolution=self.sampler.resolution,
-                )
-            except Exception as e:
-                print(f"iteration: {iter} exception: {e}")
-                modularity_score = -1
+        if save_results:
+            np.save(f"{saving_path}_modularities", modularities)
+            np.save(f"{saving_path}_communities", communities)
+            np.save(f"{saving_path}_times", times)
+            np.save(f"{saving_path}_division_trees", division_trees)
+            np.save(f"{saving_path}_division_modularities", division_modularities)
 
-            communities[iter] = communities_result
-            modularities[iter] = modularity_score
-
-            if save_results:
-                np.save(f"{saving_path}_modularities", modularities)
-                np.save(f"{saving_path}_communities", communities)
-                np.save(f"{saving_path}_times", times)
-                np.save(f"{saving_path}_division_trees", division_trees)
-                np.save(
-                    f"{saving_path}_division_modularities",
-                    division_modularities,
-                )
-                # Pickle saving tends to be safer for big objects
-                if return_metadata:
-                    try:
-                        sampleset_data.save_to_files(base_filename=f"{saving_path}_{run_label}")
-                    except Exception as e:
-                        print(f"Error while saving HierarchicalRunMetadata (sampleset_data) from iteration: {iter}", e)
-                    
-
-            if iterative_verbosity >= 1:
-                print(f"Iteration {iter} completed")
-
+        # Przygotowanie struktury rekordowej (np.recarray)
         dtypes = [
             ("communities", object),
             ("modularity", np.float64),
@@ -262,6 +291,7 @@ class IterativeHierarchicalSearcher:
         ]
 
         if return_metadata:
+            samplesets_data = np.array([r["sampleset_data"] for r in results], dtype=object)
             dtypes.append(("samplesets_data", object))
             sampleset_components.append(samplesets_data)
             
@@ -271,3 +301,134 @@ class IterativeHierarchicalSearcher:
         )
 
         return sampleset
+
+    # def run_with_sampleset_info(
+    #     self,
+    #     num_runs: int,
+    #     save_results: bool = True,
+    #     saving_path: str | None = None,
+    #     iterative_verbosity: int = 0,
+    #     return_metadata: bool = True,
+    #     **kwargs,
+    # ):
+
+    #     if return_metadata and hasattr(self.sampler, "return_metadata") and not self.sampler.return_metadata:
+    #         raise MethodArgsWarning(
+    #             f"Set Advantage sampler's {METADATA_KEYARG} flag to True before running."
+    #             + f" HierarchicalIterativeSearcher with {METADATA_KEYARG}."
+    #         )
+
+    #     if iterative_verbosity >= 1:
+    #         print("Starting community detection iterations")
+
+    #     if save_results and saving_path is None:
+    #         saving_path = self._default_saving_path()
+
+    #     modularities = np.zeros((num_runs))
+    #     communities = np.empty((num_runs), dtype=object)
+    #     times = np.zeros((num_runs))
+    #     division_modularities = np.empty((num_runs), dtype=object)
+    #     division_trees = np.empty((num_runs), dtype=object)
+    #     samplesets_data = np.empty((num_runs), dtype=object)
+
+    #     if return_metadata and isinstance(self.sampler, AdvantageSampler):
+    #         kwargs[METADATA_KEYARG] = True
+    #     else:
+    #         return_metadata = False
+    #         kwargs[METADATA_KEYARG] = False
+
+    #     for iter in tqdm(range(num_runs)):
+    #         run_label = f"iter_{iter}"
+            
+    #         elapsed = time()
+    #         result = self.searcher.hierarchical_community_search(
+    #             return_modularities=True,
+    #             division_tree=True,
+    #             saving_path=saving_path,
+    #             label=run_label,
+    #             **kwargs,
+    #         )
+
+    #         # Currently only AdvantageSampler among the hierarchical solvers
+    #         # provides sampleset metadata.
+    #         if (
+    #             isinstance(self.sampler, AdvantageSampler)
+    #             and self.sampler.return_metadata
+    #             and return_metadata
+    #         ):
+    #             (
+    #                 communities_result,
+    #                 div_tree,
+    #                 div_modularities,
+    #                 sampleset_data,
+    #             ) = result
+    #         else:
+    #             (
+    #                 communities_result,
+    #                 div_tree,
+    #                 div_modularities,
+    #             ) = result
+    #         times[iter] = time() - elapsed
+    #         division_trees[iter] = div_tree
+    #         division_modularities[iter] = div_modularities
+    #         if return_metadata:
+    #             samplesets_data[iter] = sampleset_data
+
+    #         try:
+    #             modularity_score = nx.community.modularity(
+    #                 self.searcher.sampler.G,
+    #                 communities_result,
+    #                 resolution=self.sampler.resolution,
+    #             )
+    #         except Exception as e:
+    #             print(f"iteration: {iter} exception: {e}")
+    #             modularity_score = -1
+
+    #         communities[iter] = communities_result
+    #         modularities[iter] = modularity_score
+
+    #         if save_results:
+    #             np.save(f"{saving_path}_modularities", modularities)
+    #             np.save(f"{saving_path}_communities", communities)
+    #             np.save(f"{saving_path}_times", times)
+    #             np.save(f"{saving_path}_division_trees", division_trees)
+    #             np.save(
+    #                 f"{saving_path}_division_modularities",
+    #                 division_modularities,
+    #             )
+    #             # Pickle saving tends to be safer for big objects
+    #             if return_metadata:
+    #                 try:
+    #                     sampleset_data.save_to_files(base_filename=f"{saving_path}_{run_label}")
+    #                 except Exception as e:
+    #                     print(f"Error while saving HierarchicalRunMetadata (sampleset_data) from iteration: {iter}", e)
+                    
+
+    #         if iterative_verbosity >= 1:
+    #             print(f"Iteration {iter} completed")
+
+    #     dtypes = [
+    #         ("communities", object),
+    #         ("modularity", np.float64),
+    #         ("time", np.float64),
+    #         ("division_tree", object),
+    #         ("division_modularities", object),
+    #     ]
+    #     sampleset_components = [
+    #         communities,
+    #         modularities,
+    #         times,
+    #         division_trees,
+    #         division_modularities,
+    #     ]
+
+    #     if return_metadata:
+    #         dtypes.append(("samplesets_data", object))
+    #         sampleset_components.append(samplesets_data)
+            
+    #     sampleset = np.rec.fromarrays(
+    #         sampleset_components,
+    #         dtype=dtypes,
+    #     )
+
+    #     return sampleset

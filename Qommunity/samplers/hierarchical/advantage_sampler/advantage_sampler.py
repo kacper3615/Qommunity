@@ -2,6 +2,7 @@ from QHyper.solvers.quantum_annealing.dwave.advantage import Advantage
 from QHyper.problems.community_detection import Network, CommunityDetectionProblem
 import networkx as nx
 from ..hierarchical_sampler import HierarchicalSampler
+import numpy as np
 
 
 class AdvantageSampler(HierarchicalSampler):
@@ -18,6 +19,8 @@ class AdvantageSampler(HierarchicalSampler):
         use_clique_embedding: bool = False,
         elapse_times: bool = False,
         return_metadata: bool = True,
+        saving_path: str | None = None,
+        label: str | None = None,
     ) -> None:
         if not community:
             community = [*range(G.number_of_nodes())]
@@ -32,6 +35,8 @@ class AdvantageSampler(HierarchicalSampler):
         self._use_weights = use_weights
         self.elapse_times = elapse_times
         self.return_metadata = return_metadata
+        self.saving_path = saving_path
+        self.label = label
 
         weight = "weight" if use_weights else None
 
@@ -49,6 +54,17 @@ class AdvantageSampler(HierarchicalSampler):
         problem = CommunityDetectionProblem(
             network, communities=2, one_hot_encoding=False
         )
+
+        if saving_path and label:
+            try:
+                np.save(f"{saving_path}_{label}_full_modularity_matrix.npy", self._full_modularity_matrix)
+                np.save(f"{saving_path}_{label}_generalized_modularity_matrix.npy", network.generalized_modularity_matrix)
+                np.save(f"{saving_path}_{label}_community.npy", np.array(community))
+            except Exception as e:
+                print(f"Failed to save: {e}")
+
+
+
         self.advantage = Advantage(
             problem=problem,
             version=version,
@@ -94,6 +110,8 @@ class AdvantageSampler(HierarchicalSampler):
             self.use_clique_embedding,
             self.elapse_times,
             self.return_metadata,
+            # saving_path=self.saving_path,
+            # label=self.label,
         )
         
     def __str__(self):
