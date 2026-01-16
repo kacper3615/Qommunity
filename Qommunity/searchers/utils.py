@@ -95,7 +95,7 @@ class HierarchicalRunMetadata:
                 dwave_sampleset=self.dwave_sampleset[self.idx],
                 timing=self.timing[self.idx],
                 problem_id=self.problem_id[self.idx],
-                community_hash=self.community_hash[self.idx],
+                # community_hash=self.community_hash[self.idx],
                 chain_strength=self.chain_strength[self.idx],
                 chain_break_fraction=self.chain_break_fraction[self.idx],
                 chain_break_method=self.chain_break_method[self.idx],
@@ -109,7 +109,7 @@ class HierarchicalRunMetadata:
             raise StopIteration
         
     def __len__(self):
-        return len(self.community_hash)
+        return len(self.community)
     
 
     # def __getitem__(self, index):
@@ -142,7 +142,7 @@ class HierarchicalRunMetadata:
             dwave_sampleset=self.dwave_sampleset[index],
             timing=self.timing[index],
             problem_id=self.problem_id[index],
-            community_hash=self.community_hash[index],
+            # community_hash=self.community_hash[index],
             chain_strength=self.chain_strength[index],
             chain_break_fraction=self.chain_break_fraction[index],
             chain_break_method=self.chain_break_method[index],
@@ -186,7 +186,7 @@ class HierarchicalRunMetadata:
             dwave_sampleset=self.dwave_sampleset[index],
             timing=self.timing[index],
             problem_id=self.problem_id[index],
-            community_hash=self.community_hash[index],
+            # community_hash=self.community_hash[index],
             chain_strength=self.chain_strength[index],
             chain_break_fraction=self.chain_break_fraction[index],
             chain_break_method=self.chain_break_method[index],
@@ -220,7 +220,7 @@ class HierarchicalRunMetadata:
             return [getattr(division, field_name) for division in sampleset]
         
 
-    def save_to_files(self, base_filename: str) -> None:
+    def save_to_files(self, base_filename: str, save_embeddings: bool = True) -> None:
         """
         Save each metadata field to a separate .npy file.
         """
@@ -251,10 +251,11 @@ class HierarchicalRunMetadata:
                 json.dump(self.embedding, f, indent=4)
                 
         save_dwave_samplesets_serializables(f"{base_filename}_{MetadataFieldName.DWaveSampleset.value}.pickle")
-        save_embeddings_dicts(f"{base_filename}_{MetadataFieldName.Embedding.value}_dict.json")
+        if save_embeddings:
+            save_embeddings_dicts(f"{base_filename}_{MetadataFieldName.Embedding.value}_dict.json")
 
     @staticmethod
-    def load_from_files(base_filename: str) -> None:
+    def load_from_files(base_filename: str, load_embeddings: bool = True) -> None:
         with open(f"{base_filename}_headers.pkl", "rb") as f:
             headers = pickle.load(f)
         hierarchical_metadata_new = HierarchicalRunMetadata.__new__(HierarchicalRunMetadata)
@@ -274,8 +275,9 @@ class HierarchicalRunMetadata:
 
 
         # try:
-        with open(f"{base_filename}_{MetadataFieldName.Embedding.value}_dict.json", "rb") as file:
-            data = json.load(file)
+        if load_embeddings:
+            with open(f"{base_filename}_{MetadataFieldName.Embedding.value}_dict.json", "rb") as file:
+                data = json.load(file)
         # except Exception as e:
         #     data = []
         setattr(hierarchical_metadata_new, MetadataFieldName.Embedding.value, data)

@@ -164,13 +164,15 @@ class IterativeHierarchicalSearcher:
         sampler, 
         saving_path, 
         save_results, 
-        return_metadata, 
+        return_metadata,
+        run_label,
+        save_embeddings,
         kwargs
     ):
         """
         Funkcja pomocnicza wykonująca pojedynczy przebieg w osobnym procesie.
         """
-        run_label = f"iter_{iter_idx}"
+        # run_label = f"iter_{iter_idx}"
         start_time = time()
         
         # 1. Wywołanie wyszukiwania
@@ -205,7 +207,8 @@ class IterativeHierarchicalSearcher:
         # 4. Zapisywanie metadanych dla tej konkretnej iteracji (jeśli dotyczy)
         if save_results and return_metadata and sampleset_data_single is not None:
             try:
-                sampleset_data_single.save_to_files(base_filename=f"{saving_path}_{run_label}")
+                sampleset_data_single.save_to_files(base_filename=f"{saving_path}_{run_label}", 
+                                                    save_embeddings=save_embeddings)
             except Exception as e:
                 print(f"\n[Error] Iteration {iter_idx} saving error: {e}")
 
@@ -228,6 +231,8 @@ class IterativeHierarchicalSearcher:
         iterative_verbosity: int = 0,
         return_metadata: bool = True,
         n_jobs: int = -1,  # -1 wykorzystuje wszystkie procesory
+        run_labels: list[str] | None = None,
+        save_embeddings: bool = True,
         **kwargs,
     ):
         # Sprawdzenie wymagań samplera
@@ -246,6 +251,8 @@ class IterativeHierarchicalSearcher:
             return_metadata = False
             kwargs[METADATA_KEYARG] = False
 
+        run_labels = run_labels if run_labels else [f"iter_{i}" for i in range(num_runs)]
+
         # --- RÓWNOLEGŁA PĘTLA Z TQDM ---
         # backend="loky" jest domyślny i najbezpieczniejszy dla NumPy
         results = Parallel(n_jobs=n_jobs, backend="threading")(
@@ -255,8 +262,10 @@ class IterativeHierarchicalSearcher:
                 self.sampler, 
                 saving_path, 
                 save_results, 
-                return_metadata, 
-                kwargs
+                return_metadata,
+                run_label=f"{run_labels[i]}",
+                save_embeddings=save_embeddings,
+                kwargs=kwargs
             ) for i in tqdm(range(num_runs))
         )
 
