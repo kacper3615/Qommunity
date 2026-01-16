@@ -99,17 +99,17 @@ class AdvantageSampler(HierarchicalSampler):
 
     def update_community(self, community: list) -> None:
         self.__init__(
-            self.G,
-            self.resolution,
-            community,
-            self._use_weights,
-            self.version,
-            self.region,
-            self.num_reads,
-            self.chain_strength,
-            self.use_clique_embedding,
-            self.elapse_times,
-            self.return_metadata,
+            G=self.G,
+            resolution=self.resolution,
+            community=community,
+            use_weights=self._use_weights,
+            version=self.version,
+            region=self.region,
+            num_reads=self.num_reads,
+            chain_strength=self.chain_strength,
+            use_clique_embedding=self.use_clique_embedding,
+            elapse_times=self.elapse_times,
+            return_metadata=self.return_metadata,
             # saving_path=self.saving_path,
             # label=self.label,
         )
