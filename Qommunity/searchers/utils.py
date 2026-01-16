@@ -83,6 +83,8 @@ class HierarchicalRunMetadata:
             sampleset, MetadataFieldName.Community.value
         )
 
+        # self.community_hash = [hash(map(tuple, c)) for c in self.community]
+
     def __iter__(self):
         self.idx = 0
         return self
@@ -95,7 +97,7 @@ class HierarchicalRunMetadata:
                 dwave_sampleset=self.dwave_sampleset[self.idx],
                 timing=self.timing[self.idx],
                 problem_id=self.problem_id[self.idx],
-                # community_hash=self.community_hash[self.idx],
+                community_hash=self.community_hash[self.idx],
                 chain_strength=self.chain_strength[self.idx],
                 chain_break_fraction=self.chain_break_fraction[self.idx],
                 chain_break_method=self.chain_break_method[self.idx],
@@ -109,12 +111,33 @@ class HierarchicalRunMetadata:
             raise StopIteration
         
     def __len__(self):
-        return len(self.community)
+        return len(self.problem_id)
     
 
-    # def __getitem__(self, index):
+    def __getitem__(self, index):
+        if index < 0 or index >= self.__len__():
+            raise IndexError("Index out of range")
+        return SamplesetData(
+            dwave_sampleset_metadata=self.dwave_sampleset_metadata[index],
+            time_measurements=self.time_measurements[index],
+            dwave_sampleset=self.dwave_sampleset[index],
+            timing=self.timing[index],
+            problem_id=self.problem_id[index],
+            community_hash=self.community_hash[index],
+            chain_strength=self.chain_strength[index],
+            chain_break_fraction=self.chain_break_fraction[index],
+            chain_break_method=self.chain_break_method[index],
+            embedding=self.embedding[index],
+            warnings=self.warnings[index],
+        )
+
+    # def __getitem__(self, community_hash: str | int):
+    #     self_hashes = self.community_hash
+    #     if community_hash not in self_hashes:
+    #         raise KeyError(f"Index must be community_hash in this method. Community hash '{community_hash}' not found")
+    #     index = self_hashes.index(community_hash)
     #     if index < 0 or index >= self.__len__():
-    #         raise IndexError("Index out of range")
+    #         raise IndexError("Index is a community_hash. Index out of range")
     #     return SamplesetData(
     #         dwave_sampleset_metadata=self.dwave_sampleset_metadata[index],
     #         time_measurements=self.time_measurements[index],
@@ -127,29 +150,8 @@ class HierarchicalRunMetadata:
     #         chain_break_method=self.chain_break_method[index],
     #         embedding=self.embedding[index],
     #         warnings=self.warnings[index],
+    #         community=self.community[index],
     #     )
-
-    def __getitem__(self, community_hash: str | int):
-        self_hashes = self.community_hash
-        if community_hash not in self_hashes:
-            raise KeyError(f"Index must be community_hash in this method. Community hash '{community_hash}' not found")
-        index = self_hashes.index(community_hash)
-        if index < 0 or index >= self.__len__():
-            raise IndexError("Index is a community_hash. Index out of range")
-        return SamplesetData(
-            dwave_sampleset_metadata=self.dwave_sampleset_metadata[index],
-            time_measurements=self.time_measurements[index],
-            dwave_sampleset=self.dwave_sampleset[index],
-            timing=self.timing[index],
-            problem_id=self.problem_id[index],
-            # community_hash=self.community_hash[index],
-            chain_strength=self.chain_strength[index],
-            chain_break_fraction=self.chain_break_fraction[index],
-            chain_break_method=self.chain_break_method[index],
-            embedding=self.embedding[index],
-            warnings=self.warnings[index],
-            community=self.community[index],
-        )
 
     # def __getitem__(self, pr_id: str | int):
     #     if pr_id not in self.problem_id:
@@ -186,7 +188,7 @@ class HierarchicalRunMetadata:
             dwave_sampleset=self.dwave_sampleset[index],
             timing=self.timing[index],
             problem_id=self.problem_id[index],
-            # community_hash=self.community_hash[index],
+            community_hash=self.community_hash[index],
             chain_strength=self.chain_strength[index],
             chain_break_fraction=self.chain_break_fraction[index],
             chain_break_method=self.chain_break_method[index],
@@ -281,5 +283,10 @@ class HierarchicalRunMetadata:
         # except Exception as e:
         #     data = []
         setattr(hierarchical_metadata_new, MetadataFieldName.Embedding.value, data)
+
+        if hierarchical_metadata_new.community_hash is None:
+            hierarchical_metadata_new.community_hash = [
+                hash(tuple(c)) for c in hierarchical_metadata_new.community
+            ]
         
         return hierarchical_metadata_new
