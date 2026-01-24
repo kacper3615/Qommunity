@@ -223,16 +223,22 @@ class DivisionNode:
     def chain_break_method(self):
         return self.sampleset_data.chain_break_method if self.sampleset_data else None
 
+    # def __str__(self):
+    #     return f"ExtendedNode(id={self.id}, community={self.values}, left={self.left}, right={self.right}, community_hash={self.community_hash}, problem_id={self.problem_id}, chain_strength={self.chain_strength}, chain_break_fraction={self.chain_break_fraction}, chain_break_method={self.chain_break_method})"
+
+    # def __repr__(self):
+    #     return f"ExtendedNode(id={self.id}, community={self.values}, left={self.left}, right={self.right}, community_hash={self.community_hash}, problem_id={self.problem_id}, chain_strength={self.chain_strength}, chain_break_fraction={self.chain_break_fraction}, chain_break_method={self.chain_break_method})"
+
     def __str__(self):
-        return f"ExtendedNode(id={self.id}, community={self.values}, left={self.left}, right={self.right}, community_hash={self.community_hash}, problem_id={self.problem_id}, chain_strength={self.chain_strength}, chain_break_fraction={self.chain_break_fraction}, chain_break_method={self.chain_break_method})"
+        return f"ExtendedNode(id={self.id}, left.id={self.left.id if self.left else None}, right.id={self.right.id if self.right else None}, community_hash={self.community_hash}, problem_id={self.problem_id}, chain_strength={self.chain_strength}, chain_break_fraction={self.chain_break_fraction}, chain_break_method={self.chain_break_method})"
 
     def __repr__(self):
-        return f"ExtendedNode(id={self.id}, community={self.values}, left={self.left}, right={self.right}, community_hash={self.community_hash}, problem_id={self.problem_id}, chain_strength={self.chain_strength}, chain_break_fraction={self.chain_break_fraction}, chain_break_method={self.chain_break_method})"
+        return f"ExtendedNode(id={self.id}, left.id={self.left.id if self.left else None}, right.id={self.right.id if self.right else None}, community_hash={self.community_hash}, problem_id={self.problem_id}, chain_strength={self.chain_strength}, chain_break_fraction={self.chain_break_fraction}, chain_break_method={self.chain_break_method})"
 
-    def __eq__(self, node):
-        if not isinstance(node, DivisionNode):
-            return False
-        return self.id == node.id and sorted(self.values) == sorted(node.values)
+    # def __eq__(self, node):
+    #     if not isinstance(node, DivisionNode):
+    #         return False
+    #     return self.id == node.id and sorted(self.values) == sorted(node.values)
 
 
 # def recover_info_ordering(root, nodes, sampleset_metadata):
@@ -556,7 +562,7 @@ def plot_tree_extended(
     #     Patch(facecolor=leaf_color, edgecolor="#2b3a42", label="Leaf nodes"),
     # ]
     legend_elements = [
-        Patch(facecolor=internal_color, edgecolor="#2b3a42", label="CBF = 0.0"),
+        Patch(facecolor=internal_color, edgecolor="#2b3a42", label="CBF = 0.0 or not applicable"),
         Patch(facecolor=cbf_occurred_color, edgecolor="#2b3a42", label="CBF > 0.0"),
     ]
 

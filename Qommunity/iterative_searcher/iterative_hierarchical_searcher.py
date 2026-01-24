@@ -213,6 +213,7 @@ class IterativeHierarchicalSearcher:
                 print(f"\n[Error] Iteration {iter_idx} saving error: {e}")
 
         return {
+            "iter_idx": iter_idx,
             "communities": communities_res,
             "modularity": modularity_score,
             "time": elapsed,
@@ -220,6 +221,7 @@ class IterativeHierarchicalSearcher:
             "division_modularities": div_mods,
             "sampleset_data": sampleset_data_single
         }
+
 
     # --- Fragment wewnątrz Twojej klasy ---
 
@@ -268,6 +270,9 @@ class IterativeHierarchicalSearcher:
                 kwargs=kwargs
             ) for i in tqdm(range(num_runs))
         )
+
+        results = sorted(results, key=lambda r: r["iter_idx"])
+
 
         # --- REDUKCJA WYNIKÓW (Zbieranie danych z procesów) ---
         communities = np.array([r["communities"] for r in results], dtype=object)
